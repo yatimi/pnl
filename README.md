@@ -4,6 +4,7 @@ A personal profit and loss journal with quick daily entries, a pixel-inspired in
 
 ## First release
 
+- English and Russian interface languages, with a saved language preference.
 - Daily trading PnL: an amount after fees and an optional note.
 - Separate salary and other income entries that do not affect trading statistics.
 - A calendar, cumulative PnL chart, twelve-month comparison, and entry list.
@@ -34,13 +35,13 @@ node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1
 npm run dev
 ```
 
-The local development server uses a test identity supplied by the preview plugin. This behavior is limited to development. Production has no sign-in bypass; the server checks API access and scopes every database operation to the authenticated user. Journal entries are not stored in the browser; `localStorage` is used only for the theme preference.
+The local development server uses a test identity supplied by the preview plugin. This behavior is limited to development. Production has no sign-in bypass; the server checks API access and scopes every database operation to the authenticated user. Journal entries are not stored in the browser; `localStorage` is used only for theme and language preferences.
 
 Checks:
 
 ```sh
 npx tsc --noEmit
-node --experimental-strip-types --test tests/journal.test.mjs
+node --experimental-strip-types --test tests/*.test.mjs
 npm run build
 ```
 

@@ -1,8 +1,8 @@
 // Created by Tommy.
 export const categories = {
-  trading: "Трейдинг",
-  salary: "Зарплата",
-  other: "Другие доходы",
+  trading: "Trading",
+  salary: "Salary",
+  other: "Other income",
 } as const;
 export type Category = keyof typeof categories;
 export type Entry = {
@@ -34,9 +34,9 @@ export function daysInMonth(month: string) {
     0,
   ).getDate();
 }
-export function monthLabel(month: string) {
+export function monthLabel(month: string, locale = "en-US") {
   return new Date(month + "-15T12:00:00Z")
-    .toLocaleDateString("ru-RU", {
+    .toLocaleDateString(locale, {
       month: "long",
       year: "numeric",
       timeZone: "UTC",
@@ -145,7 +145,7 @@ export function demoEntries(month: string): Entry[] {
                 date: `${m}-${String(i + 1).padStart(2, "0")}`,
                 category: "trading" as const,
                 amount: Math.round(amount * (1 + offset * 0.2)) * 100,
-                note: i % 4 === 0 ? "Закрыл позицию по плану." : "",
+                note: i % 4 === 0 ? "__demo_planned_exit__" : "",
               },
             ],
       );
@@ -153,7 +153,7 @@ export function demoEntries(month: string): Entry[] {
       date: m + "-05",
       category: "salary",
       amount: 240000,
-      note: "Зарплата",
+      note: "__demo_salary__",
     });
     return entries;
   });
