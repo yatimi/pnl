@@ -40,7 +40,6 @@ import {
   summarize,
   validateEntry,
   type Entry,
-  type Category,
 } from "@/lib/journal";
 
 async function api(path: string, options?: RequestInit) {
@@ -74,8 +73,9 @@ export default function Dashboard() {
     [error, setError] = useState(""),
     [reload, setReload] = useState(0);
   const [editor, setEditor] = useState<{
+    id: string;
     date: string;
-    category: Category;
+    entry?: Entry;
   } | null>(null);
   useEffect(() => {
     try {
@@ -132,7 +132,9 @@ export default function Dashboard() {
     .filter((e) => e.date.startsWith(month))
     .sort(
       (a, b) =>
-        b.date.localeCompare(a.date) || a.category.localeCompare(b.category),
+        b.date.localeCompare(a.date) ||
+        a.category.localeCompare(b.category) ||
+        a.id.localeCompare(b.id),
     );
   const days = daysInMonth(month),
     offset = (new Date(month + "-01T12:00:00Z").getUTCDay() + 6) % 7;
@@ -147,8 +149,8 @@ export default function Dashboard() {
     ...monthlyStats.map((value) => Math.abs(value.total)),
   );
   const unavailable = loading || !!error;
-  function openDay(date: string, category: Category = "trading") {
-    setEditor({ date, category });
+  function openDay(date: string) {
+    setEditor({ id: crypto.randomUUID().replaceAll("-", ""), date });
   }
   function toggleDemo() {
     if (demo) {
@@ -165,9 +167,7 @@ export default function Dashboard() {
     if (!demo)
       await api("/api/entries", { method: "PUT", body: JSON.stringify(entry) });
     const update = (old: Entry[]) => [
-      ...old.filter(
-        (e) => !(e.date === entry.date && e.category === entry.category),
-      ),
+      ...old.filter((e) => e.id !== entry.id),
       entry,
     ];
     if (demo) setDemoData(update);
@@ -175,13 +175,12 @@ export default function Dashboard() {
     setMonth(entry.date.slice(0, 7));
     toast.success(demo ? t("demoSaved") : t("saved"));
   }
-  async function remove(date: string, category: Category) {
+  async function remove(id: string) {
     if (!demo)
-      await api(`/api/entries?date=${date}&category=${category}`, {
+      await api(`/api/entries?id=${id}`, {
         method: "DELETE",
       });
-    const update = (old: Entry[]) =>
-      old.filter((e) => !(e.date === date && e.category === category));
+    const update = (old: Entry[]) => old.filter((e) => e.id !== id);
     if (demo) setDemoData(update);
     else setEntries(update);
     toast.success(t("deleted"));
@@ -661,7 +660,7 @@ export default function Dashboard() {
                     </TableHeader>
                     <TableBody>
                       {current.map((e) => (
-                        <TableRow key={e.date + e.category}>
+                        <TableRow key={e.id}>
                           <TableCell className="mono">
                             {new Date(e.date + "T12:00:00Z").toLocaleDateString(
                               locale,
@@ -688,7 +687,9 @@ export default function Dashboard() {
                                 source: t(e.category),
                                 date: e.date,
                               })}
-                              onClick={() => openDay(e.date, e.category)}
+                              onClick={() =>
+                                setEditor({ id: e.id, date: e.date, entry: e })
+                              }
                             >
                               <ArrowUpRight size={16} />
                             </button>
@@ -714,10 +715,10 @@ export default function Dashboard() {
       </main>
       {editor && (
         <EntryEditor
-          key={editor.date + editor.category}
+          key={editor.id}
           date={editor.date}
-          category={editor.category}
-          entries={records}
+          id={editor.id}
+          initial={editor.entry}
           demo={demo}
           onClose={() => setEditor(null)}
           onSave={save}

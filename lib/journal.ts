@@ -6,11 +6,13 @@ export const categories = {
 } as const;
 export type Category = keyof typeof categories;
 export type Entry = {
+  id: string;
   date: string;
   category: Category;
   amount: number;
   note: string;
 };
+export const entryIdPattern = /^[a-f0-9]{32}$/;
 export const datePattern = /^20\d{2}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 export const monthPattern = /^20\d{2}-(0[1-9]|1[0-2])$/;
 export function validDate(value: string) {
@@ -75,6 +77,8 @@ export function validateEntry(input: unknown): Entry | null {
   if (!input || typeof input !== "object") return null;
   const v = input as Record<string, unknown>;
   if (
+    typeof v.id !== "string" ||
+    !entryIdPattern.test(v.id) ||
     typeof v.date !== "string" ||
     !validDate(v.date) ||
     typeof v.category !== "string" ||
@@ -88,6 +92,7 @@ export function validateEntry(input: unknown): Entry | null {
     return null;
   if (v.category !== "trading" && v.amount < 0) return null;
   return {
+    id: v.id,
     date: v.date,
     category: v.category as Category,
     amount: v.amount,
@@ -142,6 +147,10 @@ export function demoEntries(month: string): Entry[] {
           ? []
           : [
               {
+                id: `${m.replace("-", "")}${String(i + 1).padStart(2, "0")}0`.padEnd(
+                  32,
+                  "0",
+                ),
                 date: `${m}-${String(i + 1).padStart(2, "0")}`,
                 category: "trading" as const,
                 amount: Math.round(amount * (1 + offset * 0.2)) * 100,
@@ -150,6 +159,7 @@ export function demoEntries(month: string): Entry[] {
             ],
       );
     entries.push({
+      id: `${m.replace("-", "")}051`.padEnd(32, "0"),
       date: m + "-05",
       category: "salary",
       amount: 240000,

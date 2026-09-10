@@ -2,11 +2,9 @@
 import { getChatGPTUser } from "../../chatgpt-auth";
 import { listEntries, saveEntry, deleteEntry } from "../../../db/journal";
 import {
-  categories,
+  entryIdPattern,
   monthPattern,
-  validDate,
   validateEntry,
-  type Category,
 } from "../../../lib/journal";
 export const dynamic = "force-dynamic";
 function json(data: unknown, status = 200) {
@@ -65,13 +63,10 @@ export async function DELETE(request: Request) {
   const user = await getChatGPTUser();
   if (!user) return json({ error: "authRequired" }, 401);
   if (!sameOrigin(request)) return json({ error: "invalidOrigin" }, 403);
-  const url = new URL(request.url),
-    date = url.searchParams.get("date") ?? "",
-    category = url.searchParams.get("category") ?? "";
-  if (!validDate(date) || !Object.hasOwn(categories, category))
-    return json({ error: "invalidEntry" }, 400);
+  const id = new URL(request.url).searchParams.get("id") ?? "";
+  if (!entryIdPattern.test(id)) return json({ error: "invalidEntry" }, 400);
   try {
-    await deleteEntry(user.userId, date, category as Category);
+    await deleteEntry(user.userId, id);
     return json({ deleted: true });
   } catch (error) {
     console.error("Journal delete failed", error);

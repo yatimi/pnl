@@ -9,6 +9,7 @@ import {
   moveMonth,
 } from "../lib/journal.ts";
 const entry = (date, amount, category = "trading") => ({
+  id: crypto.randomUUID().replaceAll("-", ""),
   date,
   amount,
   category,
@@ -86,4 +87,20 @@ test("server validation blocks unknown categories, fractional cents, long notes 
     entry("2026-09-31", 1),
   ])
     assert.equal(validateEntry(value), null);
+});
+
+test("multiple entries are summed per day and daily statistics count the net result", () => {
+  const records = [
+    entry("2026-09-01", 10000),
+    entry("2026-09-01", -100000),
+    entry("2026-09-01", 30000, "salary"),
+    entry("2026-09-01", 5000, "salary"),
+  ];
+  const stats = summarize(records, "2026-09");
+  assert.equal(stats.total, -90000);
+  assert.equal(stats.daily.get("2026-09-01"), -90000);
+  assert.equal(stats.active, 1);
+  assert.equal(stats.losses, 1);
+  assert.equal(stats.wins, 0);
+  assert.equal(stats.income, 35000);
 });

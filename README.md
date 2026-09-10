@@ -13,7 +13,7 @@ A personal profit and loss journal with quick daily entries, a pixel-inspired in
 - A separate journal for each authenticated user.
 - A demo with sample data. Demo changes are temporary and never enter the personal journal.
 
-All amounts are entered in USD and stored as integer cents. Currency conversion is not supported. Each date supports one entry per income source; saving again updates that entry. A zero trading result counts as a recorded day. The profitable-day percentage measures days, not individual trades. Drawdown starts from zero cumulative PnL at the beginning of the selected month. Comparisons use recorded data only; months may be incomplete.
+All amounts are entered in USD and stored as integer cents. Currency conversion is not supported. Each date supports multiple entries, including multiple entries from the same source. Adding an entry creates a separate record; editing and deleting affect only the selected record. Daily totals sum all entries, while trading statistics exclude salary and other income. A zero trading result counts as a recorded day. The profitable-day percentage measures days, not individual trades. Drawdown starts from zero cumulative PnL at the beginning of the selected month. Comparisons use recorded data only; months may be incomplete.
 
 Monthly summaries use deterministic calculations, without generative AI or forecasts. Exchange integrations, a mobile app, and AI analysis are potential future additions.
 
@@ -28,10 +28,11 @@ npm run install:ci
 npm run build
 ```
 
-Apply the migration to the local database once:
+Apply each pending migration to the local database once, in order:
 
 ```sh
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_uneven_randall.sql
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0001_complex_giant_girl.sql
 npm run dev
 ```
 
@@ -42,6 +43,7 @@ Checks:
 ```sh
 npx tsc --noEmit
 node --experimental-strip-types --test tests/*.test.mjs
+python3 tests/migration_test.py
 npm run build
 ```
 

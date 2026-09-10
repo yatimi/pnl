@@ -39,27 +39,26 @@ import {
 } from "@/lib/journal";
 export default function EntryEditor({
   date: initialDate,
-  category: initialCategory,
-  entries,
+  id,
+  initial,
   demo,
   onClose,
   onSave,
   onDelete,
 }: {
   date: string;
-  category: Category;
-  entries: Entry[];
+  id: string;
+  initial?: Entry;
   demo: boolean;
   onClose: () => void;
   onSave: (entry: Entry) => Promise<void>;
-  onDelete: (date: string, category: Category) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
 }) {
   const { t } = useLanguage();
-  const initial = entries.find(
-    (e) => e.date === initialDate && e.category === initialCategory,
-  );
   const [date, setDate] = useState(initialDate),
-    [category, setCategory] = useState<Category>(initialCategory);
+    [category, setCategory] = useState<Category>(
+      initial?.category ?? "trading",
+    );
   const [amount, setAmount] = useState(
       initial ? String(Math.abs(initial.amount) / 100) : "",
     ),
@@ -68,18 +67,11 @@ export default function EntryEditor({
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [confirmDelete, setConfirmDelete] = useState(false);
-  const existing = entries.find(
-    (e) => e.date === date && e.category === category,
-  );
+  const existing = initial;
   function selectRecord(nextDate: string, nextCategory: Category) {
-    const next = entries.find(
-      (e) => e.date === nextDate && e.category === nextCategory,
-    );
     setDate(nextDate);
     setCategory(nextCategory);
-    setAmount(next ? String(Math.abs(next.amount) / 100) : "");
-    setNote(next?.note ?? "");
-    setSign(next && next.amount < 0 ? "loss" : "gain");
+    if (nextCategory !== "trading") setSign("gain");
     setError("");
   }
   async function submit(event: React.FormEvent) {
@@ -98,6 +90,7 @@ export default function EntryEditor({
     setError("");
     try {
       await onSave({
+        id,
         date,
         category,
         amount: category === "trading" && sign === "loss" ? -minor : minor,
@@ -115,7 +108,7 @@ export default function EntryEditor({
     setBusy(true);
     setError("");
     try {
-      await onDelete(date, category);
+      await onDelete(id);
       onClose();
     } catch (e) {
       setError(e instanceof Error ? e.message : "deleteFailed");

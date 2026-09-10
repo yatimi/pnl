@@ -4,10 +4,15 @@ import {
   text,
   integer,
   primaryKey,
+  index,
 } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
 export const journalEntries = sqliteTable(
   "journal_entries",
   {
+    id: text("id")
+      .notNull()
+      .default(sql`(lower(hex(randomblob(16))))`),
     userId: text("user_id").notNull(),
     date: text("date").notNull(),
     category: text("category", {
@@ -17,6 +22,7 @@ export const journalEntries = sqliteTable(
     note: text("note").notNull().default(""),
   },
   (table) => [
-    primaryKey({ columns: [table.userId, table.date, table.category] }),
+    primaryKey({ columns: [table.userId, table.id] }),
+    index("journal_entries_user_date_idx").on(table.userId, table.date),
   ],
 );
