@@ -160,8 +160,8 @@ export default function Dashboard() {
       setDemo(false);
       setMonth(localDate().slice(0, 7));
     } else {
-      const m = moveMonth(localDate().slice(0, 7), -1);
-      setDemoData(demoEntries(m));
+      const m = "2026-09";
+      setDemoData(demoEntries());
       setMonth(m);
       setDemo(true);
     }

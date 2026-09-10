@@ -2,6 +2,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  demoEntries,
   parseAmount,
   validDate,
   validateEntry,
@@ -103,4 +104,18 @@ test("multiple entries are summed per day and daily statistics count the net res
   assert.equal(stats.losses, 1);
   assert.equal(stats.wins, 0);
   assert.equal(stats.income, 35000);
+});
+
+test("demo matches supplied calendars without invented income or missing-day records", () => {
+  const records = demoEntries();
+  assert.equal(records.length, 42);
+  assert.equal(new Set(records.map((e) => e.id)).size, 42);
+  assert.ok(records.every((e) => validateEntry(e) && e.category === "trading"));
+  assert.equal(summarize(records, "2026-08").total, 80919);
+  assert.equal(summarize(records, "2026-09").total, -91858);
+  assert.equal(records.find((e) => e.date === "2026-09-11").amount, 0);
+  assert.equal(
+    records.find((e) => e.date === "2026-09-12"),
+    undefined,
+  );
 });

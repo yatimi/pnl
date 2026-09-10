@@ -79,3 +79,5 @@ Use Share in the header to export the selected month’s trading PnL, or Share b
 4. Release through a separate `develop` → `main` pull request. Keep `develop` after the merge. Coordinate the release with deployment; GitHub Actions currently validates changes and does not deploy the site.
 
 Both `develop` and `main` also run checks after pushes. Until repository branch protection is available, following the pull request and passing-check policy is a maintainer responsibility.
+
+Demo data reproduces the supplied August and September 2026 daily calendars (42 entries). Source amounts are in USDT and are shown numerically 1:1 in the demo without currency conversion. Explicit zero days are retained; unreported days and other income are not invented. Opening Demo selects September 2026.

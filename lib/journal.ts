@@ -133,38 +133,29 @@ export function summarize(entries: Entry[], month: string) {
     drawdown,
   };
 }
-export function demoEntries(month: string): Entry[] {
-  const amounts = [
-    180, -65, 320, 95, 0, 210, -120, 480, 140, -85, 260, 0, 175, -90, 360, 120,
-    0, 410, -150, 285, 90, 0, 195, -70, 310, 160, 0, 225, -110, 340, 80,
-  ];
-  return [-2, -1, 0].flatMap((offset) => {
-    const m = moveMonth(month, offset);
-    const entries: Entry[] = amounts
-      .slice(0, daysInMonth(m))
-      .flatMap((amount, i) =>
-        amount === 0
-          ? []
-          : [
-              {
-                id: `${m.replace("-", "")}${String(i + 1).padStart(2, "0")}0`.padEnd(
-                  32,
-                  "0",
-                ),
-                date: `${m}-${String(i + 1).padStart(2, "0")}`,
-                category: "trading" as const,
-                amount: Math.round(amount * (1 + offset * 0.2)) * 100,
-                note: i % 4 === 0 ? "__demo_planned_exit__" : "",
-              },
-            ],
-      );
-    entries.push({
-      id: `${m.replace("-", "")}051`.padEnd(32, "0"),
-      date: m + "-05",
-      category: "salary",
-      amount: 240000,
-      note: "__demo_salary__",
-    });
-    return entries;
-  });
+// Daily values transcribed from the supplied August/September 2026 calendars.
+// Integer cents preserve the displayed precision; zero is a recorded result.
+export function demoEntries(): Entry[] {
+  const months = {
+    "2026-08": [
+      -57, -3812, -227, 1375, -1045, 16, -1, 16, 0, 0, 0, 0, 0, 0, 0, 2798,
+      -591, 1643, 829, 3018, 49396, -4207, 51108, 16023, -28170, 29864, 53341,
+      -5764, -30582, -50100, -3952,
+    ],
+    "2026-09": [
+      -3200, 0, 31089, 21219, -19292, -84620, 43322, -36996, 10963, -54343, 0,
+    ],
+  };
+  return Object.entries(months).flatMap(([month, amounts]) =>
+    amounts.map((amount, index) => ({
+      id: `${month.replace("-", "")}${String(index + 1).padStart(2, "0")}`.padEnd(
+        32,
+        "0",
+      ),
+      date: `${month}-${String(index + 1).padStart(2, "0")}`,
+      category: "trading" as const,
+      amount,
+      note: "",
+    })),
+  );
 }
