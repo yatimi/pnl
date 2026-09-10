@@ -2,6 +2,7 @@
 """Exercise the real local Worker, without browser automation or production data."""
 import json
 import sys
+import time
 import uuid
 import urllib.request
 import urllib.error
@@ -18,11 +19,17 @@ def request(method, path, body=None, user=None, origin=None):
         headers.update({'oai-authenticated-user-id': user, 'oai-authenticated-user-email': 'test@example.invalid'})
     data = json.dumps(body).encode() if body is not None else None
     req = urllib.request.Request(base + path, data=data, headers=headers, method=method)
-    try:
-        response = urllib.request.urlopen(req, timeout=10)
-    except urllib.error.HTTPError as error:
-        response = error
-    raw = response.read()
+    # Wrangler may restart its local worker just after reporting readiness.
+    # Retry only that exact transport response, never application failures.
+    for attempt in range(3):
+        try:
+            response = urllib.request.urlopen(req, timeout=10)
+        except urllib.error.HTTPError as error:
+            response = error
+        raw = response.read()
+        if response.status != 503 or not raw.startswith(b'Your worker restarted mid-request.') or attempt == 2:
+            break
+        time.sleep(0.5)
     try:
         result = json.loads(raw)
     except json.JSONDecodeError as error:
