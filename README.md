@@ -70,3 +70,12 @@ When supported by the browser, WebMCP exposes navigation to a selected month. It
 ### Share cards
 
 Use Share in the header to export the selected month’s trading PnL, or Share beside an entry to export that entry. Cards follow the current language and theme and download as 1200 × 1200 PNG images. Supported browsers can open the native share sheet; otherwise Share downloads the image. Demo cards are labeled. Notes, account details, and other income are excluded from monthly trading cards. Images are generated locally in the browser.
+
+### Development workflow
+
+1. Create a feature branch from the latest `develop`.
+2. Open a pull request targeting `develop`. The `Validate journal` check runs TypeScript, calculation and translation tests, migration tests, the production build, and local API tests.
+3. Merge the pull request with a merge commit once the checks pass, then delete the completed feature branch.
+4. Release through a separate `develop` → `main` pull request. Keep `develop` after the merge. Coordinate the release with deployment; GitHub Actions currently validates changes and does not deploy the site.
+
+Both `develop` and `main` also run checks after pushes. Until repository branch protection is available, following the pull request and passing-check policy is a maintainer responsibility.
