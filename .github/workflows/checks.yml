@@ -65,6 +65,6 @@ jobs:
             cat /tmp/pnl-api.log
             exit 1
           fi
-          python3 tests/api_smoke.py http://127.0.0.1:8787
+          python3 tests/api_smoke.py http://127.0.0.1:8787 || { cat /tmp/pnl-api.log; exit 1; }
       - name: Check whitespace
         run: git show --format= --check HEAD

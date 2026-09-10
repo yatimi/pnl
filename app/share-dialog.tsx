@@ -1,6 +1,6 @@
 "use client";
 // Created by Tommy.
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Download, Share2, X } from "lucide-react";
 import {
   Dialog,
@@ -29,7 +29,7 @@ export default function ShareDialog({
   onClose: () => void;
 }) {
   const { t, locale } = useLanguage();
-  const canvas = useRef<HTMLCanvasElement>(null);
+  const [canvas, setCanvas] = useState<HTMLCanvasElement | null>(null);
   const [blob, setBlob] = useState<Blob | null>(null);
   const [error, setError] = useState(false);
   const [sharing, setSharing] = useState(false);
@@ -38,8 +38,8 @@ export default function ShareDialog({
     let cancelled = false;
     setBlob(null);
     setError(false);
-    if (canvas.current)
-      renderShareCard(canvas.current, {
+    if (canvas)
+      renderShareCard(canvas, {
         entries,
         month,
         entry,
@@ -65,7 +65,7 @@ export default function ShareDialog({
     return () => {
       cancelled = true;
     };
-  }, [entries, month, entry, theme, demo, locale, t]);
+  }, [canvas, entries, month, entry, theme, demo, locale, t]);
   function download() {
     if (!blob) return;
     const url = URL.createObjectURL(blob);
@@ -114,7 +114,7 @@ export default function ShareDialog({
         <DialogTitle className="dialog-title">{t("shareTitle")}</DialogTitle>
         <DialogDescription>{t("shareHint")}</DialogDescription>
         <canvas
-          ref={canvas}
+          ref={setCanvas}
           className="share-preview"
           role="img"
           aria-label={t("sharePreview")}
