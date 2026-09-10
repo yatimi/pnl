@@ -5,6 +5,7 @@ import { isLanguage, isTranslationKey } from "@/lib/i18n";
 import { useLanguage } from "./language-provider";
 import { flushSync } from "react-dom";
 import {
+  Share2,
   Moon,
   Sun,
   Plus,
@@ -27,6 +28,7 @@ import {
 import { Toaster, toast } from "sonner";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import EntryEditor from "./entry-editor";
+import ShareDialog from "./share-dialog";
 import EquityChart from "./equity-chart";
 import {
   compactMoney,
@@ -72,6 +74,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
     [reload, setReload] = useState(0);
+  const [shareCard, setShareCard] = useState<{ entry?: Entry } | null>(null);
   const [editor, setEditor] = useState<{
     id: string;
     date: string;
@@ -247,6 +250,15 @@ export default function Dashboard() {
         </a>
         <span className="header-caption">{t("journal")}</span>
         <div className="header-actions">
+          <button
+            className="icon-button"
+            disabled={unavailable || stats.active === 0}
+            onClick={() => setShareCard({})}
+            aria-label={t("shareTitle")}
+            title={t("shareTitle")}
+          >
+            <Share2 size={18} />
+          </button>
           <button
             className={"demo-button " + (demo ? "is-demo" : "")}
             onClick={toggleDemo}
@@ -681,18 +693,31 @@ export default function Dashboard() {
                             {money(e.amount)}
                           </TableCell>
                           <TableCell>
-                            <button
-                              className="icon-button"
-                              aria-label={t("editEntry", {
-                                source: t(e.category),
-                                date: e.date,
-                              })}
-                              onClick={() =>
-                                setEditor({ id: e.id, date: e.date, entry: e })
-                              }
-                            >
-                              <ArrowUpRight size={16} />
-                            </button>
+                            <div className="share-actions">
+                              <button
+                                className="icon-button"
+                                onClick={() => setShareCard({ entry: e })}
+                                aria-label={t("shareEntry")}
+                              >
+                                <Share2 size={16} />
+                              </button>
+                              <button
+                                className="icon-button"
+                                aria-label={t("editEntry", {
+                                  source: t(e.category),
+                                  date: e.date,
+                                })}
+                                onClick={() =>
+                                  setEditor({
+                                    id: e.id,
+                                    date: e.date,
+                                    entry: e,
+                                  })
+                                }
+                              >
+                                <ArrowUpRight size={16} />
+                              </button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -713,6 +738,16 @@ export default function Dashboard() {
           </span>
         </footer>
       </main>
+      {shareCard && (
+        <ShareDialog
+          entries={records}
+          month={month}
+          entry={shareCard.entry}
+          theme={theme}
+          demo={demo}
+          onClose={() => setShareCard(null)}
+        />
+      )}
       {editor && (
         <EntryEditor
           key={editor.id}

@@ -66,3 +66,7 @@ The calendar workflows in [TradeZella](https://www.tradezella.com/blog/pnl-calen
 Pixelify Sans is distributed under the SIL Open Font License. A copy is included in `public/pixelify-license.txt`.
 
 When supported by the browser, WebMCP exposes navigation to a selected month. It has not yet been validated in a supported browser context and is not required for ordinary use.
+
+### Share cards
+
+Use Share in the header to export the selected month’s trading PnL, or Share beside an entry to export that entry. Cards follow the current language and theme and download as 1200 × 1200 PNG images. Supported browsers can open the native share sheet; otherwise Share downloads the image. Demo cards are labeled. Notes, account details, and other income are excluded from monthly trading cards. Images are generated locally in the browser.

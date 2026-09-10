@@ -1083,3 +1083,25 @@ h1 {
     font-size: 12px;
   }
 }
+
+/* Share cards */
+.share-dialog {
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+}
+.share-preview {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  border: 1px solid var(--border);
+}
+.share-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.share-actions .primary-button {
+  flex: 1;
+}

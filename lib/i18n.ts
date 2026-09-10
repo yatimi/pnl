@@ -1,6 +1,17 @@
 // Created by Tommy.
 export const messages = {
   en: {
+    shareTitle: "Share PnL",
+    shareEntry: "Share this entry",
+    shareHint:
+      "Save your card or share it. Notes and personal details stay private.",
+    sharePreview: "PnL card preview",
+    shareFooter: "PERSONAL JOURNAL / RECORDED RESULTS",
+    shareSingleEntry: "1 RECORDED ENTRY",
+    shareRecordedDays: "recorded days",
+    shareFailed: "Could not create or share the image. Close this window and try again.",
+    savePng: "Save PNG",
+
     journal: "PERSONAL JOURNAL",
     home: "PNL — home",
     myJournal: "My journal",
@@ -138,6 +149,18 @@ export const messages = {
     deleteRetry: "Could not delete the entry. Please try again.",
   },
   ru: {
+    shareTitle: "Поделиться PnL",
+    shareEntry: "Поделиться записью",
+    shareHint:
+      "Сохрани карточку или поделись ей. Заметки и личные данные останутся в дневнике.",
+    sharePreview: "Предпросмотр карточки PnL",
+    shareFooter: "ЛИЧНЫЙ ДНЕВНИК / ЗАПИСАННЫЕ РЕЗУЛЬТАТЫ",
+    shareSingleEntry: "1 ЗАПИСЬ",
+    shareRecordedDays: "записанных дней",
+    shareFailed:
+      "Не удалось создать или отправить изображение. Закрой окно и попробуй снова.",
+    savePng: "Сохранить PNG",
+
     journal: "ЛИЧНЫЙ ДНЕВНИК",
     home: "PNL — главная",
     myJournal: "Мой дневник",
