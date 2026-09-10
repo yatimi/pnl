@@ -19,7 +19,7 @@ def request(method, path, body=None, user=None, origin=None):
     data = json.dumps(body).encode() if body is not None else None
     req = urllib.request.Request(base + path, data=data, headers=headers, method=method)
     try:
-        response = urllib.request.urlopen(req)
+        response = urllib.request.urlopen(req, timeout=10)
     except urllib.error.HTTPError as error:
         response = error
     return response.status, json.loads(response.read())

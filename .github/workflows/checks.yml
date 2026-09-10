@@ -1,0 +1,70 @@
+# Author: Tommy
+name: Checks
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  validate:
+    name: Validate journal
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      WRANGLER_SEND_METRICS: 'false'
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install dependencies
+        run: npm run install:ci
+      - name: Check TypeScript
+        run: npx tsc --noEmit
+      - name: Test journal calculations and translations
+        run: node --experimental-strip-types --test tests/*.test.mjs
+      - name: Test database migration
+        run: python3 tests/migration_test.py
+      - name: Build application
+        run: npm run build
+      - name: Test local API
+        shell: bash
+        run: |
+          set -euo pipefail
+          for migration in drizzle/*.sql; do
+            node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file "$migration"
+          done
+          npm start -- --port 8787 > /tmp/pnl-api.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          ready=false
+          for attempt in {1..30}; do
+            status=$(curl --max-time 2 -s -o /dev/null -w '%{http_code}' 'http://127.0.0.1:8787/api/entries?month=2026-09' || true)
+            if [ "$status" = 401 ]; then
+              ready=true
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" != true ]; then
+            cat /tmp/pnl-api.log
+            exit 1
+          fi
+          python3 tests/api_smoke.py http://127.0.0.1:8787
+      - name: Check whitespace
+        run: git show --format= --check HEAD

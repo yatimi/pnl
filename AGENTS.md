@@ -10,3 +10,7 @@
 - Use relevant installed skills only. Run appropriate builds and tests and review the final diff.
 - main matches the deployed site; develop integrates work; feature branches hold individual tasks.
 - Use short, clear commit subjects without conventional-commit prefixes or AI product branding.
+- Open a pull request from each feature branch into develop. Wait for Validate journal to pass before merging; do not push feature changes directly to develop.
+- Use a separate develop-to-main release pull request. Preserve develop after release; delete completed feature branches after confirming their changes are merged.
+- Use merge commits for pull requests so branch ancestry remains intact. Never squash or rebase the long-lived develop branch into main.
+- main releases and deployment must stay coordinated. A GitHub merge alone does not deploy this project.
