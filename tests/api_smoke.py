@@ -22,7 +22,12 @@ def request(method, path, body=None, user=None, origin=None):
         response = urllib.request.urlopen(req, timeout=10)
     except urllib.error.HTTPError as error:
         response = error
-    return response.status, json.loads(response.read())
+    raw = response.read()
+    try:
+        result = json.loads(raw)
+    except json.JSONDecodeError as error:
+        raise AssertionError(f'{method} {path}: HTTP {response.status}, non-JSON response: {raw[:500]!r}') from error
+    return response.status, result
 
 entry = {'id': uuid.uuid4().hex, 'date': '2026-09-01', 'category': 'trading', 'amount': 10000, 'note': '<script>text only</script>'}
 second = {**entry, 'id': uuid.uuid4().hex, 'amount': -100000, 'note': 'second entry'}
