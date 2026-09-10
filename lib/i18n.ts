@@ -9,7 +9,8 @@ export const messages = {
     shareFooter: "PERSONAL JOURNAL / RECORDED RESULTS",
     shareSingleEntry: "1 RECORDED ENTRY",
     shareRecordedDays: "recorded days",
-    shareFailed: "Could not create or share the image. Close this window and try again.",
+    shareFailed:
+      "Could not create or share the image. Close this window and try again.",
     savePng: "Save PNG",
 
     journal: "PERSONAL JOURNAL",
@@ -23,7 +24,8 @@ export const messages = {
     subtitle: "Your results. Without the noise.",
     addDay: "Add entry",
     demoHeading: "SAMPLE JOURNAL",
-    demoHint: "Try adding an entry. Demo data stays out of your journal.",
+    demoHint:
+      "August–September 2026 · Source: USDT, displayed 1:1 in the demo. Changes stay out of your journal.",
     calendar: "Calendar",
     analytics: "Analytics",
     entries: "Entries",
@@ -172,7 +174,8 @@ export const messages = {
     subtitle: "Твои результаты. Без лишнего шума.",
     addDay: "Добавить запись",
     demoHeading: "ПРИМЕР ДНЕВНИКА",
-    demoHint: "Можно попробовать ввод. Демо не попадёт в твои записи.",
+    demoHint:
+      "Август–сентябрь 2026 · Источник: USDT, в демо суммы показаны 1:1. Изменения не попадут в твой дневник.",
     calendar: "Календарь",
     analytics: "Аналитика",
     entries: "Записи",
