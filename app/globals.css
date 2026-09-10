@@ -889,23 +889,39 @@ h1 {
 .amount-field {
   display: flex;
   align-items: center;
+  gap: 8px;
+  min-width: 0;
   border: 1px solid var(--input);
   background: var(--card);
   padding: 6px 14px;
 }
+.amount-field:focus-within {
+  border-color: var(--ring);
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
 .amount-field span {
+  flex: 0 0 auto;
+  white-space: nowrap;
   font:
     30px Pixelify,
     monospace;
   color: var(--muted-foreground);
 }
 .amount-field input {
+  flex: 1 1 0;
+  width: 0;
+  padding-inline: 0;
   border: 0;
   background: none;
   font:
     40px Pixelify,
     monospace;
   min-width: 0;
+}
+.amount-field input:focus {
+  outline: none;
+  box-shadow: none;
 }
 .form-actions {
   display: flex;
