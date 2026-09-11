@@ -1,6 +1,6 @@
 "use client";
 // Created by Tommy.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { isLanguage, isTranslationKey } from "@/lib/i18n";
 import { useLanguage } from "./language-provider";
 import { convertEntry, type ExchangeRates } from "@/lib/exchange";
@@ -109,10 +109,12 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
     [error, setError] = useState(""),
     [reload, setReload] = useState(0);
   const [shareCard, setShareCard] = useState<{ entry?: Entry } | null>(null);
+  const addEntryButton = useRef<HTMLButtonElement>(null);
   const [editor, setEditor] = useState<{
     id: string;
     date: string;
     entry?: Entry;
+    trigger: HTMLButtonElement;
   } | null>(null);
   useEffect(() => {
     try {
@@ -189,8 +191,8 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
     ...monthlyStats.map((value) => Math.abs(value.total)),
   );
   const unavailable = loading || !!error || conversionUnavailable;
-  function openDay(date: string) {
-    setEditor({ id: crypto.randomUUID().replaceAll("-", ""), date });
+  function openDay(date: string, trigger: HTMLButtonElement) {
+    setEditor({ id: crypto.randomUUID().replaceAll("-", ""), date, trigger });
   }
   function toggleDemo() {
     if (demo) {
@@ -350,11 +352,13 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
             <p className="muted">{t("subtitle")}</p>
           </div>
           <button
+            ref={addEntryButton}
             className="primary-button"
             disabled={loading || !!error}
-            onClick={() =>
+            onClick={(event) =>
               openDay(
                 month === localDate().slice(0, 7) ? localDate() : month + "-01",
+                event.currentTarget,
               )
             }
           >
@@ -428,7 +432,7 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
             </div>
           )}
           {conversionUnavailable && <div className="status-message">
-            {originalRecords.filter((entry) => entry.date.startsWith(month)).map((entry) => <button key={entry.id} className="text-button" onClick={() => setEditor({ id: entry.id, date: entry.date, entry })}>
+            {originalRecords.filter((entry) => entry.date.startsWith(month)).map((entry) => <button key={entry.id} className="text-button" onClick={(event) => setEditor({ id: entry.id, date: entry.date, entry, trigger: event.currentTarget })}>
               {entry.date} · {t(entry.category)} · {formatMoney(entry.amount, true, true, entry.currency ?? "USD")}
             </button>)}
           </div>}
@@ -530,7 +534,7 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
                         <button
                           key={i}
                           className={`day-cell ${value === undefined ? "" : value > 0 ? "gain" : value < 0 ? "loss" : ""} ${date === localDate() ? "today" : ""}`}
-                          onClick={() => openDay(date)}
+                          onClick={(event) => openDay(date, event.currentTarget)}
                           aria-label={t("openDay", {
                             day,
                             month: monthLabel(month, locale),
@@ -664,7 +668,7 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
                           className="month-bar"
                           aria-label={t("openMonthLabel", {
                             month: monthLabel(m, locale),
-                            amount: money(s.total),
+                            amount: s.active ? money(s.total) : t("noTradingEntry"),
                           })}
                         >
                           <span className="bar-value">
@@ -711,7 +715,7 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
                     <p className="muted">{t("emptyBody")}</p>
                     <button
                       className="primary-button"
-                      onClick={() => openDay(month + "-01")}
+                      onClick={(event) => openDay(month + "-01", event.currentTarget)}
                     >
                       <Plus size={18} /> {t("firstEntry")}
                     </button>
@@ -775,11 +779,12 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
                                   source: t(e.category),
                                   date: e.date,
                                 })}
-                                onClick={() =>
+                                onClick={(event) =>
                                   setEditor({
                                     id: e.id,
                                     date: e.date,
                                     entry: original,
+                                    trigger: event.currentTarget,
                                   })
                                 }
                               >
@@ -827,6 +832,10 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
           initial={editor.entry}
           demo={demo}
           onClose={() => setEditor(null)}
+          onRestoreFocus={() => {
+            const target = editor.trigger.isConnected ? editor.trigger : addEntryButton.current;
+            target?.focus();
+          }}
           onSave={save}
           onDelete={remove}
         />

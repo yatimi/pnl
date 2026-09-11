@@ -300,14 +300,14 @@ p {
 }
 .stats-grid {
   display: grid;
-  grid-template-columns: 1.35fr 1fr 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: 24px;
   padding: 28px 0;
   border-bottom: 1px solid var(--border);
   margin-bottom: 32px;
 }
 .stat {
-  padding: 0 22px;
-  border-left: 1px solid var(--border);
+  min-width: 0;
 }
 .stat:first-child {
   padding-left: 0;
@@ -471,8 +471,7 @@ h2 {
     height: 72px;
   }
   .stats-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 24px 0;
+    gap: 24px;
   }
   .stat:nth-child(3) {
     border: 0;
@@ -931,8 +930,7 @@ h1 {
   flex: 0 0 auto;
   white-space: nowrap;
   font:
-    30px Pixelify,
-    monospace;
+    600 1.875rem var(--font-sans);
   color: var(--muted-foreground);
 }
 .amount-field input {
@@ -942,8 +940,8 @@ h1 {
   border: 0;
   background: none;
   font:
-    40px Pixelify,
-    monospace;
+    600 2.5rem var(--font-sans);
+  font-variant-numeric: lining-nums tabular-nums;
   min-width: 0;
 }
 .amount-field input:focus {
@@ -1056,8 +1054,7 @@ h1 {
 }
 
 .stat strong {
-  white-space: normal;
-  overflow-wrap: anywhere;
+  overflow-x: auto;
 }
 .day-value {
   max-width: 100%;
