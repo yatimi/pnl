@@ -64,7 +64,7 @@ async function api(path: string, options?: RequestInit) {
   if (!response.ok) throw new Error(result.error ?? "requestFailed");
   return result;
 }
-export default function Dashboard() {
+export default function Dashboard({ initialDemo = false }: { initialDemo?: boolean }) {
   const { language, locale, setLanguage, t } = useLanguage();
   const [currency, setCurrency] = useState<Currency>("USD");
   const [exchange, setExchange] = useState<ExchangeRates | null>(null);
@@ -99,10 +99,10 @@ export default function Dashboard() {
       .toLocaleDateString(locale, { weekday: "short", timeZone: "UTC" })
       .toUpperCase(),
   );
-  const [month, setMonth] = useState(() => localDate().slice(0, 7));
+  const [month, setMonth] = useState(() => initialDemo ? "2026-09" : localDate().slice(0, 7));
   const [entries, setEntries] = useState<Entry[]>([]),
-    [demo, setDemo] = useState(false),
-    [demoData, setDemoData] = useState<Entry[]>([]);
+    [demo, setDemo] = useState(initialDemo),
+    [demoData, setDemoData] = useState<Entry[]>(() => initialDemo ? demoEntries() : []);
   const [theme, setTheme] = useState("dark"),
     [view, setView] = useState("calendar");
   const [loading, setLoading] = useState(true),
@@ -194,6 +194,7 @@ export default function Dashboard() {
   }
   function toggleDemo() {
     if (demo) {
+      if (initialDemo) { window.location.assign("/sign-in"); return; }
       setDemo(false);
       setMonth(localDate().slice(0, 7));
     } else {
@@ -287,6 +288,7 @@ export default function Dashboard() {
         </a>
         <span className="header-caption">{t("journal")}</span>
         <div className="header-actions">
+          {!initialDemo && <form action="/auth/signout" method="post"><button className="text-button" type="submit">{t("signOut")}</button></form>}
           <button
             className="icon-button"
             disabled={unavailable || stats.active === 0}
@@ -367,7 +369,7 @@ export default function Dashboard() {
         )}
         <div className="exchange-notice small muted" role="status">
           {exchange ? <span title={t("conversionHint")}>
-            <a href="https://bank.gov.ua/ua/markets/exchangerates" target="_blank" rel="noreferrer">{t("nbuRates")}</a> · {exchange.date} · 1 USD = {exchange.rates.USD} UAH · 1 EUR = {exchange.rates.EUR} UAH. {t("conversionHint")}
+            <a href="https://nbp.pl/en/statistic-and-financial-reporting/rates/table-a/" target="_blank" rel="noreferrer">{t("nbpRates")}</a> · {exchange.date} · 1 EUR = {(exchange.rates.EUR / exchange.rates.USD).toFixed(4)} USD · 1 EUR = {(exchange.rates.EUR / exchange.rates.UAH).toFixed(4)} UAH. {t("conversionHint")}
           </span> : <span>{ratesError ? t("ratesUnavailable") : t("ratesLoading")}</span>}
           {ratesError && <button className="text-button" onClick={() => setRatesReload((value) => value + 1)}>{t("retry")}</button>}
           {ratesError && exchange && <span>{t("ratesOld")}</span>}

@@ -1,8 +1,9 @@
 // Created by Tommy.
+import { redirect } from "next/navigation";
 import Dashboard from "./dashboard";
-import { requireChatGPTUser } from "./chatgpt-auth";
+import { getUser } from "./auth";
 export const dynamic = "force-dynamic";
 export default async function Home() {
-  await requireChatGPTUser("/");
+  if (!await getUser()) redirect("/sign-in");
   return <Dashboard />;
 }
