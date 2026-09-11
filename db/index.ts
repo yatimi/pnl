@@ -1,7 +1,4 @@
 // Created by Tommy.
-import { env } from "cloudflare:workers";
-
-export function getDatabase() {
-  if (!env.DB) throw new Error("Journal database unavailable");
-  return env.DB;
-}
+import { createClient } from "@/lib/supabase/server";
+// Uses the authenticated user's session, never an admin/service-role key.
+export const getDatabase = createClient;

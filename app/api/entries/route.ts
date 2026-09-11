@@ -1,5 +1,5 @@
 // Created by Tommy.
-import { getChatGPTUser } from "../../chatgpt-auth";
+import { getUser } from "../../auth";
 import { listEntries, saveEntry, deleteEntry } from "../../../db/journal";
 import {
   entryIdPattern,
@@ -18,7 +18,7 @@ function sameOrigin(request: Request) {
   return origin === new URL(request.url).origin;
 }
 export async function GET(request: Request) {
-  const user = await getChatGPTUser();
+  const user = await getUser();
   if (!user) return json({ error: "authRequired" }, 401);
   const month = new URL(request.url).searchParams.get("month") ?? "";
   if (!monthPattern.test(month))
@@ -31,7 +31,7 @@ export async function GET(request: Request) {
   }
 }
 export async function PUT(request: Request) {
-  const user = await getChatGPTUser();
+  const user = await getUser();
   if (!user) return json({ error: "authRequired" }, 401);
   if (!sameOrigin(request)) return json({ error: "invalidOrigin" }, 403);
   if (Number(request.headers.get("content-length") ?? 0) > 8192)
@@ -60,7 +60,7 @@ export async function PUT(request: Request) {
   }
 }
 export async function DELETE(request: Request) {
-  const user = await getChatGPTUser();
+  const user = await getUser();
   if (!user) return json({ error: "authRequired" }, 401);
   if (!sameOrigin(request)) return json({ error: "invalidOrigin" }, 403);
   const id = new URL(request.url).searchParams.get("id") ?? "";

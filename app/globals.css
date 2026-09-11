@@ -1111,3 +1111,12 @@ h1 {
 .exchange-notice { margin: 0 0 20px; line-height: 1.6; }
 .exchange-notice a { text-decoration: underline; }
 .header-actions { flex-wrap: wrap; }
+
+/* Public account screens — Tommy. */
+.auth-shell { width: min(480px, calc(100% - 32px)); margin: 8vh auto; }
+.auth-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; }
+.auth-panel { padding: 28px; border: 1px solid var(--border); background: var(--card); }
+.auth-panel h1 { font-size: 28px; margin-bottom: 12px; }
+.auth-panel .entry-form { margin-top: 24px; }
+.auth-panel .primary-button { width: 100%; justify-content: center; margin-top: 8px; }
+.auth-links { display: flex; flex-wrap: wrap; gap: 16px; margin-block: 20px; }

@@ -61,7 +61,7 @@ export async function renderShareCard(
   text(card.period.toUpperCase(), 80, 255, 30, muted);
   text(card.label.toUpperCase(), 80, 337, 27, muted);
   text(money(value, true, true, card.currency), 72, 472, 132, accent, true);
-  text(card.currency + (card.rateDate ? ` · NBU ${card.rateDate}` : ""), 80, 526, 25, muted);
+  text(card.currency + (card.rateDate ? ` · NBP ${card.rateDate}` : ""), 80, 526, 25, muted);
   if (!card.entry) {
     const days = daysInMonth(card.month);
     let cumulative = 0;

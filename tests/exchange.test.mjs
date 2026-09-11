@@ -3,10 +3,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { convertEntry, parseExchangeRates } from "../lib/exchange.ts";
 import { validateEntry, summarize, money, compactMoney } from "../lib/journal.ts";
-const rates = parseExchangeRates([
-  { cc: "USD", rate: 40, exchangedate: "11.09.2026" },
-  { cc: "EUR", rate: 50, exchangedate: "11.09.2026" },
-]);
+const rates = parseExchangeRates([{ effectiveDate: "2026-09-11", rates: [
+  { code: "USD", mid: 4 }, { code: "EUR", mid: 5 }, { code: "UAH", mid: 0.1 },
+] }]);
 const entry = { id: "a".repeat(32), date: "2026-09-01", category: "trading", amount: 10000, currency: "USD", note: "" };
 test("cross-currency totals use rounded minor units and preserve originals", () => {
   assert.equal(convertEntry(entry, "EUR", rates).amount, 8000);
@@ -25,10 +24,10 @@ test("missing rates never invent a conversion; same currency works offline", () 
   assert.deepEqual(convertEntry(entry, "USD", null), entry);
 });
 test("invalid provider data and unsupported currencies are rejected", () => {
-  for (const input of [null, [], [{ cc: "USD", rate: 0 }], [
-    { cc: "USD", rate: 40, exchangedate: "11.09.2026" },
-    { cc: "EUR", rate: 50, exchangedate: "10.09.2026" },
-  ]]) assert.throws(() => parseExchangeRates(input));
+  for (const input of [null, [], [{ effectiveDate: "bad", rates: [] }],
+    [{ effectiveDate: "2026-09-11", rates: [{ code: "USD", mid: 0 }] }],
+    [{ effectiveDate: "2026-09-11", rates: [{ code: "USD", mid: 4 }, { code: "EUR", mid: 5 }] }],
+  ]) assert.throws(() => parseExchangeRates(input));
   for (const currency of ["GBP", "toString", null, 12]) assert.equal(validateEntry({ ...entry, currency }), null);
   const { currency, ...legacy } = entry;
   assert.equal(validateEntry(legacy).currency, "USD");
