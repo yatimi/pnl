@@ -4,7 +4,7 @@ A private profit and loss journal with a public demo, daily entries, calendar, c
 
 ## Runtime
 
-The public version runs on standard Next.js on Vercel, with Supabase Auth and PostgreSQL. Email/password authentication, email confirmation, password recovery, and sign-out use the official Supabase SDK. Journal routes verify the session with Supabase; client-supplied identity headers are ignored. Database row-level policies independently restrict all reads and writes to the signed-in owner. No service-role key is used by the application.
+The public version runs on standard Next.js on Vercel, with Supabase Auth and PostgreSQL. GitHub OAuth sign-in, secure callbacks, and sign-out use the official Supabase SDK. Journal routes verify the session with Supabase; client-supplied identity headers are ignored. Database row-level policies independently restrict all reads and writes to the signed-in owner. No service-role key is used by the application.
 
 Amounts are stored as integer minor units in their original currency. New entries default to USD. The display currency converts each record with the latest NBP (National Bank of Poland) table A rates, rounded once to minor units. Historical totals are current-rate estimates, not historical FX accounting. The rate date and source appear in the journal and converted share cards. Missing rates do not invent values: original records remain accessible, and totals needing conversion are hidden. Trading statistics exclude salary and other income.
 
@@ -24,10 +24,10 @@ Without Supabase configuration, the public demo remains available and sign-in is
 ## Vercel release setup
 
 - Create a Supabase project in an EU region. Apply the migration before release.
-- Keep email confirmation enabled. Configure a production SMTP provider: Supabase's default email service is restricted and is not sufficient for general public signup.
-- Set the Supabase Auth site URL to the final HTTPS Vercel/custom domain. Allow that exact site's `/auth/callback` (including the password-reset query path), plus localhost only for local development. Use a separate test project for previews rather than broad production redirect wildcards.
+- Create a GitHub OAuth App with only profile/email access. Set its callback to the Supabase project callback URL, and configure its client ID/secret in Supabase Auth → GitHub. Disable unused email/password signup. No SMTP service is required.
+- Set the Supabase Auth site URL to the final HTTPS Vercel/custom domain. Allow that exact site's `/auth/callback` plus localhost only for local development. Use a separate test project for previews rather than broad production redirect wildcards.
 - Configure `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in Vercel before building. `vercel.json` selects Next.js and Frankfurt execution.
-- Test real registration, email confirmation, login, password recovery, and CRUD from two separate accounts before public launch. The code and CI tests cannot verify SMTP delivery or remote project settings.
+- Test real GitHub sign-in, sign-out, and CRUD from two separate accounts before public launch. The code and CI tests cannot verify SMTP delivery or remote project settings.
 
 The previous Sites deployment remains a separate legacy service. `.openai/hosting.json`, `drizzle/`, `db/schema.ts`, `drizzle.config.ts`, and the unused Sites build scripts preserve its identity and migration history; they are not used by the Next.js runtime. Do not deploy this Next.js release archive through the old Sites pipeline. Existing Sites user IDs must be mapped explicitly to verified new Supabase accounts when transferring records; never infer ownership from a submitted email or identifier. The old database must be retained until transfer is verified.
 
