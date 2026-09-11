@@ -7,10 +7,10 @@ let cached: { value: ExchangeRates; expires: number } | undefined;
 export async function GET() {
   try {
     if (!cached || cached.expires <= Date.now()) {
-      const response = await fetch("https://bank.gov.ua/NBUStatService/v1/statdirectory/exchangenew?json", {
+      const response = await fetch("https://api.nbp.pl/api/exchangerates/tables/a/?format=json", {
         signal: AbortSignal.timeout(8000),
       });
-      if (!response.ok) throw new Error("NBU unavailable");
+      if (!response.ok) throw new Error("NBP unavailable");
       cached = { value: parseExchangeRates(await response.json()), expires: Date.now() + 3600000 };
     }
     return Response.json(cached.value, { headers: { "Cache-Control": "public, max-age=300" } });

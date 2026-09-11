@@ -5,15 +5,20 @@ export type ExchangeRates = { date: string; rates: Record<Currency, number> };
 
 export function parseExchangeRates(input: unknown): ExchangeRates {
   if (!Array.isArray(input)) throw new Error("Invalid exchange rates");
-  const usd = input.find((row) => row?.cc === "USD");
-  const eur = input.find((row) => row?.cc === "EUR");
-  if (!usd || !eur || typeof usd.exchangedate !== "string" ||
-      !/^\d{2}\.\d{2}\.\d{4}$/.test(usd.exchangedate) ||
-      usd.exchangedate !== eur.exchangedate ||
-      ![usd.rate, eur.rate].every((rate) => typeof rate === "number" && Number.isFinite(rate) && rate > 0)) {
+  const table = input[0];
+  if (!table || typeof table.effectiveDate !== "string" ||
+      !/^20\d{2}-\d{2}-\d{2}$/.test(table.effectiveDate) || !Array.isArray(table.rates)) {
     throw new Error("Invalid exchange rates");
   }
-  return { date: usd.exchangedate.split(".").reverse().join("-"), rates: { USD: usd.rate, EUR: eur.rate, UAH: 1 } };
+  const rate = (code: Currency) => {
+    const value = table.rates.find((row: { code?: unknown }) => row?.code === code)?.mid;
+    if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
+      throw new Error("Invalid exchange rates");
+    }
+    return value;
+  };
+  // All NBP quotes share PLN as their base; conversion uses their ratio.
+  return { date: table.effectiveDate, rates: { USD: rate("USD"), EUR: rate("EUR"), UAH: rate("UAH") } };
 }
 
 export function convertEntry(entry: Entry, currency: Currency, exchange: ExchangeRates | null): Entry {

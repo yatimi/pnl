@@ -1,83 +1,53 @@
 # pnl.
 
-A personal profit and loss journal with quick daily entries, a pixel-inspired interface, and light and dark themes.
+A private profit and loss journal with a public demo, daily entries, calendar, charts, monthly statistics, and PNG share cards. English and Russian UI, light/dark themes, and USD/EUR/UAH currencies.
 
-## First release
+## Runtime
 
-- English and Russian interface languages, with a saved language preference.
-- Daily trading PnL: an amount after fees and an optional note.
-- Separate salary and other income entries that do not affect trading statistics.
-- A calendar, cumulative PnL chart, twelve-month comparison, and entry list.
-- Monthly summaries, profitable-day percentage, and maximum drawdown.
-- Editing, confirmed deletion, and server-side storage.
-- A separate journal for each authenticated user.
-- A demo with sample data. Demo changes are temporary and never enter the personal journal.
+The public version runs on standard Next.js on Vercel, with Supabase Auth and PostgreSQL. GitHub OAuth sign-in, secure callbacks, and sign-out use the official Supabase SDK. Journal routes verify the session with Supabase; client-supplied identity headers are ignored. Database row-level policies independently restrict all reads and writes to the signed-in owner. No service-role key is used by the application.
 
-All amounts are entered in USD and stored as integer cents. Currency conversion is not supported. Each date supports multiple entries, including multiple entries from the same source. Adding an entry creates a separate record; editing and deleting affect only the selected record. Daily totals sum all entries, while trading statistics exclude salary and other income. A zero trading result counts as a recorded day. The profitable-day percentage measures days, not individual trades. Drawdown starts from zero cumulative PnL at the beginning of the selected month. Comparisons use recorded data only; months may be incomplete.
+Amounts are stored as integer minor units in their original currency. New entries default to USD. The display currency converts each record with the latest NBP (National Bank of Poland) table A rates, rounded once to minor units. Historical totals are current-rate estimates, not historical FX accounting. The rate date and source appear in the journal and converted share cards. Missing rates do not invent values: original records remain accessible, and totals needing conversion are hidden. Trading statistics exclude salary and other income.
 
-Monthly summaries use deterministic calculations, without generative AI or forecasts. Exchange integrations, a mobile app, and AI analysis are potential future additions.
+`/demo` is public and temporary; it never writes sample data to the database. Authenticated journals are private. Language, theme, and display currency preferences are device-local.
 
-## Development
+## Local development
 
-Built with React, TypeScript, Vinext, and Cloudflare D1. Interface primitives reuse the installed component library. The hosted first release uses ChatGPT sign-in and is private by default. Hosting outside Sites requires a trusted authentication layer: never trust `oai-authenticated-user-*` headers received directly from the public internet.
+Requires Node.js 22.13+.
 
-Requires Node.js 22.13 or later.
+1. Run `npm ci`.
+2. Copy `.env.example` to `.env.local` and fill in the Supabase project URL and publishable key. Never put a service-role key in a `NEXT_PUBLIC_` variable.
+3. Apply `supabase/migrations/202609110001_journal.sql` once to a new Supabase project.
+4. Run `npm run dev`; open http://localhost:3000.
 
-```sh
-npm run install:ci
-npm run build
-```
+Without Supabase configuration, the public demo remains available and sign-in is explicitly unavailable. The app never enables a development authentication bypass.
 
-Apply each pending migration to the local database once, in order:
+## Vercel release setup
 
-```sh
-node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_uneven_randall.sql
-node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0001_complex_giant_girl.sql
-npm run dev
-```
+- Create a Supabase project in an EU region. Apply the migration before release.
+- Create a GitHub OAuth App with only profile/email access. Set its callback to the Supabase project callback URL, and configure its client ID/secret in Supabase Auth → GitHub. Disable unused email/password signup. No SMTP service is required.
+- Set the Supabase Auth site URL to the final HTTPS Vercel/custom domain. Allow that exact site's `/auth/callback` plus localhost only for local development. Use a separate test project for previews rather than broad production redirect wildcards.
+- Configure `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in Vercel before building. `vercel.json` selects Next.js and Frankfurt execution.
+- Test real GitHub sign-in, sign-out, and CRUD from two separate accounts before public launch. The code and CI tests cannot verify SMTP delivery or remote project settings.
 
-The local development server uses a test identity supplied by the preview plugin. This behavior is limited to development. Production has no sign-in bypass; the server checks API access and scopes every database operation to the authenticated user. Journal entries are not stored in the browser; `localStorage` is used only for theme and language preferences.
+The previous Sites deployment remains a separate legacy service. `.openai/hosting.json`, `drizzle/`, `db/schema.ts`, `drizzle.config.ts`, and the unused Sites build scripts preserve its identity and migration history; they are not used by the Next.js runtime. Do not deploy this Next.js release archive through the old Sites pipeline. Existing Sites user IDs must be mapped explicitly to verified new Supabase accounts when transferring records; never infer ownership from a submitted email or identifier. The old database must be retained until transfer is verified.
 
-Checks:
+## Validation
 
 ```sh
 npx tsc --noEmit
 node --experimental-strip-types --test tests/*.test.mjs
 python3 tests/migration_test.py
 npm run build
+npm start -- --port 8787
+python3 tests/api_smoke.py http://localhost:8787
 ```
 
-To test the API against the local production server, run `npm start -- --port 8787`, followed by `python3 tests/api_smoke.py http://localhost:8787`. The script creates isolated test records and removes them after verification.
+CI also runs `tests/rls.sql` against an isolated PostgreSQL database to verify owner isolation, anonymous denial, immutable ownership, and monetary constraints. Never run that test fixture against production.
 
-## Branches
+## Branches and releases
 
-- `main` holds the release intended for deployment.
-- `develop` integrates completed work.
-- `feature/<name>` holds an individual task before it is merged into `develop`.
+Feature branches target `develop`. Wait for `Validate journal`, then merge with a merge commit. Release with a separate `develop` → `main` pull request, preserving `develop`. Coordinate that merge with a verified Vercel deployment; a GitHub merge alone is not evidence of deployment. Delete completed feature branches after confirming their changes were merged.
 
-Use short, descriptive commit subjects without prefixes such as `feat:`. Promote releases from `develop` to `main` after builds and checks pass.
+## Attribution
 
-## Design and attribution
-
-Project author: Tommy. Developed with AI assistance. Source code and history are maintained in a private repository.
-
-The calendar workflows in [TradeZella](https://www.tradezella.com/blog/pnl-calendar) and [Tradervue](https://www.tradervue.com/pnl-calendar) informed the research. The interface was implemented independently.
-
-Pixelify Sans is distributed under the SIL Open Font License. A copy is included in `public/pixelify-license.txt`.
-
-When supported by the browser, WebMCP exposes navigation to a selected month. It has not yet been validated in a supported browser context and is not required for ordinary use.
-
-### Share cards
-
-Use Share in the header to export the selected month’s trading PnL, or Share beside an entry to export that entry. Cards follow the current language and theme and download as 1200 × 1200 PNG images. Supported browsers can open the native share sheet; otherwise Share downloads the image. Demo cards are labeled. Notes, account details, and other income are excluded from monthly trading cards. Images are generated locally in the browser.
-
-### Development workflow
-
-1. Create a feature branch from the latest `develop`.
-2. Open a pull request targeting `develop`. The `Validate journal` check runs TypeScript, calculation and translation tests, migration tests, the production build, and local API tests.
-3. Merge the pull request with a merge commit once the checks pass, then delete the completed feature branch.
-4. Release through a separate `develop` → `main` pull request. Keep `develop` after the merge. Coordinate the release with deployment; GitHub Actions currently validates changes and does not deploy the site.
-
-Both `develop` and `main` also run checks after pushes. Until repository branch protection is available, following the pull request and passing-check policy is a maintainer responsibility.
-
-Demo data reproduces the supplied August and September 2026 daily calendars (42 entries). Source amounts are in USDT and are shown numerically 1:1 in the demo without currency conversion. Explicit zero days are retained; unreported days and other income are not invented. Opening Demo selects September 2026.
+Author: Tommy. Pixelify Sans uses the SIL Open Font License; see `public/pixelify-license.txt`. Demo entries reproduce the supplied August–September 2026 calendars (42 entries), treating the source USDT amounts as USD 1:1 before display conversion. Share cards omit notes and account details; monthly cards contain trading PnL only.
