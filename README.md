@@ -7,7 +7,7 @@ A private profit and loss journal with a public demo, daily entries, calendar, c
 - Website: [pnl-xi.vercel.app](https://pnl-xi.vercel.app)
 - Public demo: [pnl-xi.vercel.app/demo](https://pnl-xi.vercel.app/demo)
 
-Deployment verified on September 11, 2026: the sign-in page and demo are publicly accessible, NBP exchange rates load, and anonymous journal API requests return HTTP 401. GitHub sign-in still needs the client secret saved in Supabase and an end-to-end login/CRUD check. Google, Apple, and email sign-in are not enabled.
+Deployment verified on September 11, 2026: the sign-in page and demo are publicly accessible, NBP exchange rates load, and anonymous journal API requests return HTTP 401. GitHub sign-in is configured and the site owner confirmed successful login. End-to-end record persistence and two-account isolation checks on the hosted service remain pending. Google, Apple, and email sign-in are not available in the app.
 
 ## Runtime
 
