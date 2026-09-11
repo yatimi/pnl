@@ -46,6 +46,7 @@ export default function EntryEditor({
   initial,
   demo,
   onClose,
+  onRestoreFocus,
   onSave,
   onDelete,
 }: {
@@ -54,6 +55,7 @@ export default function EntryEditor({
   initial?: Entry;
   demo: boolean;
   onClose: () => void;
+  onRestoreFocus: () => void;
   onSave: (entry: Entry) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 }) {
@@ -133,6 +135,10 @@ export default function EntryEditor({
         className="entry-dialog"
         showCloseButton={false}
         onInteractOutside={(event) => event.preventDefault()}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          onRestoreFocus();
+        }}
       >
         <DialogClose asChild>
           <button
