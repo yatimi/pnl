@@ -2,6 +2,13 @@
 
 A private profit and loss journal with a public demo, daily entries, calendar, charts, monthly statistics, and PNG share cards. English and Russian UI, light/dark themes, and USD/EUR/UAH currencies.
 
+## Live site
+
+- Website: [pnl-xi.vercel.app](https://pnl-xi.vercel.app)
+- Public demo: [pnl-xi.vercel.app/demo](https://pnl-xi.vercel.app/demo)
+
+Deployment verified on September 11, 2026: the sign-in page and demo are publicly accessible, NBP exchange rates load, and anonymous journal API requests return HTTP 401. GitHub sign-in still needs the client secret saved in Supabase and an end-to-end login/CRUD check. Google, Apple, and email sign-in are not enabled.
+
 ## Runtime
 
 The public version runs on standard Next.js on Vercel, with Supabase Auth and PostgreSQL. GitHub OAuth sign-in, secure callbacks, and sign-out use the official Supabase SDK. Journal routes verify the session with Supabase; client-supplied identity headers are ignored. Database row-level policies independently restrict all reads and writes to the signed-in owner. No service-role key is used by the application.
