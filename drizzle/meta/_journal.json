@@ -15,6 +15,13 @@
       "when": 1789074530681,
       "tag": "0001_complex_giant_girl",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1789111153075,
+      "tag": "0002_lonely_firestar",
+      "breakpoints": true
     }
   ]
 }

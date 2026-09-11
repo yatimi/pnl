@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { isLanguage, isTranslationKey } from "@/lib/i18n";
 import { useLanguage } from "./language-provider";
+import { convertEntry, type ExchangeRates } from "@/lib/exchange";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { flushSync } from "react-dom";
 import {
   Share2,
@@ -31,11 +33,15 @@ import EntryEditor from "./entry-editor";
 import ShareDialog from "./share-dialog";
 import EquityChart from "./equity-chart";
 import {
-  compactMoney,
+  compactMoney as formatCompactMoney,
+  currencies,
+  currencySymbols,
+  isCurrency,
+  type Currency,
   daysInMonth,
   demoEntries,
   localDate,
-  money,
+  money as formatMoney,
   monthLabel,
   monthPattern,
   moveMonth,
@@ -60,6 +66,34 @@ async function api(path: string, options?: RequestInit) {
 }
 export default function Dashboard() {
   const { language, locale, setLanguage, t } = useLanguage();
+  const [currency, setCurrency] = useState<Currency>("USD");
+  const [exchange, setExchange] = useState<ExchangeRates | null>(null);
+  const [ratesError, setRatesError] = useState(false);
+  const [ratesReload, setRatesReload] = useState(0);
+  useEffect(() => {
+    try {
+      const value = localStorage.getItem("pnl-currency");
+      if (isCurrency(value)) setCurrency(value);
+    } catch {}
+  }, []);
+  useEffect(() => {
+    const controller = new AbortController();
+    async function refresh() {
+      try {
+        const response = await fetch("/api/exchange-rates", { signal: controller.signal });
+        if (!response.ok) throw new Error();
+        const value = await response.json() as ExchangeRates;
+        if (!controller.signal.aborted) { setExchange(value); setRatesError(false); }
+      } catch {
+        if (!controller.signal.aborted) setRatesError(true);
+      }
+    }
+    void refresh();
+    const timer = setInterval(() => void refresh(), 3600000);
+    return () => { controller.abort(); clearInterval(timer); };
+  }, [ratesReload]);
+  const money = (amount: number, signed = true, decimals = true) => formatMoney(amount, signed, decimals, currency);
+  const compactMoney = (amount: number) => formatCompactMoney(amount, currency);
   const weekdays = Array.from({ length: 7 }, (_, index) =>
     new Date(Date.UTC(2026, 0, 5 + index))
       .toLocaleDateString(locale, { weekday: "short", timeZone: "UTC" })
@@ -108,7 +142,7 @@ export default function Dashboard() {
           !data.entries.every((e) => validateEntry(e))
         )
           throw new Error("invalidData");
-        if (!controller.signal.aborted) setEntries(data.entries);
+        if (!controller.signal.aborted) setEntries(data.entries.map((entry) => validateEntry(entry)!));
       })
       .catch((e) => {
         if (!controller.signal.aborted) setError(e.message);
@@ -118,7 +152,7 @@ export default function Dashboard() {
       });
     return () => controller.abort();
   }, [month, demo, reload]);
-  const records = demo
+  const originalRecords: Entry[] = demo
     ? demoData.map((entry) => ({
         ...entry,
         note:
@@ -129,6 +163,9 @@ export default function Dashboard() {
               : entry.note,
       }))
     : entries;
+  const needsConversion = originalRecords.some((entry) => (entry.currency ?? "USD") !== currency);
+  const conversionUnavailable = needsConversion && !exchange;
+  const records = conversionUnavailable ? [] : originalRecords.map((entry) => convertEntry(entry, currency, exchange));
   const stats = summarize(records, month),
     prev = summarize(records, moveMonth(month, -1));
   const current = records
@@ -151,7 +188,7 @@ export default function Dashboard() {
     1,
     ...monthlyStats.map((value) => Math.abs(value.total)),
   );
-  const unavailable = loading || !!error;
+  const unavailable = loading || !!error || conversionUnavailable;
   function openDay(date: string) {
     setEditor({ id: crypto.randomUUID().replaceAll("-", ""), date });
   }
@@ -281,6 +318,16 @@ export default function Dashboard() {
               RU
             </ToggleGroupItem>
           </ToggleGroup>
+          <Select value={currency} onValueChange={(value) => {
+            if (isCurrency(value)) {
+              setCurrency(value);
+              setShareCard(null);
+              try { localStorage.setItem("pnl-currency", value); } catch {}
+            }
+          }}>
+            <SelectTrigger className="currency-switch" aria-label={t("displayCurrency")}><SelectValue /></SelectTrigger>
+            <SelectContent>{currencies.map((value) => <SelectItem key={value} value={value}>{value}</SelectItem>)}</SelectContent>
+          </Select>
           <button
             className="icon-button"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -302,7 +349,7 @@ export default function Dashboard() {
           </div>
           <button
             className="primary-button"
-            disabled={unavailable}
+            disabled={loading || !!error}
             onClick={() =>
               openDay(
                 month === localDate().slice(0, 7) ? localDate() : month + "-01",
@@ -318,6 +365,13 @@ export default function Dashboard() {
             <span>{t("demoHint")}</span>
           </div>
         )}
+        <div className="exchange-notice small muted" role="status">
+          {exchange ? <span title={t("conversionHint")}>
+            <a href="https://bank.gov.ua/ua/markets/exchangerates" target="_blank" rel="noreferrer">{t("nbuRates")}</a> · {exchange.date} · 1 USD = {exchange.rates.USD} UAH · 1 EUR = {exchange.rates.EUR} UAH. {t("conversionHint")}
+          </span> : <span>{ratesError ? t("ratesUnavailable") : t("ratesLoading")}</span>}
+          {ratesError && <button className="text-button" onClick={() => setRatesReload((value) => value + 1)}>{t("retry")}</button>}
+          {ratesError && exchange && <span>{t("ratesOld")}</span>}
+        </div>
         <Tabs value={view} onValueChange={setView} className="journal-tabs">
           <div className="toolbar">
             <TabsList variant="line" className="view-tabs">
@@ -353,7 +407,7 @@ export default function Dashboard() {
                 <ChevronRight size={18} />
               </button>
             </div>
-            <span className="currency-label">USD / $</span>
+            <span className="currency-label">{currency} / {currencySymbols[currency]}</span>
           </div>
           {loading && (
             <p role="status" className="status-message">
@@ -371,6 +425,11 @@ export default function Dashboard() {
               </button>
             </div>
           )}
+          {conversionUnavailable && <div className="status-message">
+            {originalRecords.filter((entry) => entry.date.startsWith(month)).map((entry) => <button key={entry.id} className="text-button" onClick={() => setEditor({ id: entry.id, date: entry.date, entry })}>
+              {entry.date} · {t(entry.category)} · {formatMoney(entry.amount, true, true, entry.currency ?? "USD")}
+            </button>)}
+          </div>}
           <section className="stats-grid" aria-label={t("monthTotals")}>
             <div className="stat">
               <p>{t("monthResult")}</p>
@@ -427,7 +486,7 @@ export default function Dashboard() {
           {!unavailable && (
             <>
               <TabsContent value="calendar">
-                <EquityChart entries={records} month={month} />
+                <EquityChart entries={records} month={month} currency={currency} />
                 <section className="calendar-panel">
                   <div className="section-heading">
                     <h2>{t("pnlCalendar")}</h2>
@@ -522,7 +581,7 @@ export default function Dashboard() {
                 </section>
               </TabsContent>
               <TabsContent value="analytics">
-                <EquityChart entries={records} month={month} />
+                <EquityChart entries={records} month={month} currency={currency} />
                 <div className="analytics-grid">
                   <section className="insight-panel">
                     <p className="eyebrow">{t("summaryHeading")}</p>
@@ -671,7 +730,9 @@ export default function Dashboard() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {current.map((e) => (
+                      {current.map((e) => {
+                        const original = originalRecords.find((record) => record.id === e.id)!;
+                        return (
                         <TableRow key={e.id}>
                           <TableCell className="mono">
                             {new Date(e.date + "T12:00:00Z").toLocaleDateString(
@@ -691,6 +752,11 @@ export default function Dashboard() {
                             className={`mono text-right ${e.amount < 0 ? "negative" : "positive"}`}
                           >
                             {money(e.amount)}
+                            {original.currency !== currency && (
+                              <div className="small muted">
+                                {formatMoney(original.amount, true, true, original.currency)}
+                              </div>
+                            )}
                           </TableCell>
                           <TableCell>
                             <div className="share-actions">
@@ -711,7 +777,7 @@ export default function Dashboard() {
                                   setEditor({
                                     id: e.id,
                                     date: e.date,
-                                    entry: e,
+                                    entry: original,
                                   })
                                 }
                               >
@@ -720,7 +786,8 @@ export default function Dashboard() {
                             </div>
                           </TableCell>
                         </TableRow>
-                      ))}
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 )}
@@ -741,8 +808,10 @@ export default function Dashboard() {
       {shareCard && (
         <ShareDialog
           entries={records}
+          currency={currency}
+          rateDate={needsConversion ? exchange?.date : undefined}
           month={month}
-          entry={shareCard.entry}
+          entry={shareCard.entry ? records.find((entry) => entry.id === shareCard.entry?.id) : undefined}
           theme={theme}
           demo={demo}
           onClose={() => setShareCard(null)}

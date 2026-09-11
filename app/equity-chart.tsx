@@ -2,14 +2,17 @@
 // Created by Tommy.
 import { useState } from "react";
 import { useLanguage } from "./language-provider";
-import { daysInMonth, money, summarize, type Entry } from "@/lib/journal";
+import { daysInMonth, money as formatMoney, summarize, type Currency, type Entry } from "@/lib/journal";
 export default function EquityChart({
   entries,
   month,
+  currency,
 }: {
   entries: Entry[];
   month: string;
+  currency: Currency;
 }) {
+  const money = (amount: number, signed = true, decimals = true) => formatMoney(amount, signed, decimals, currency);
   const { t, locale } = useLanguage();
   const [hover, setHover] = useState<number | null>(null);
   const { daily } = summarize(entries, month);

@@ -1105,3 +1105,9 @@ h1 {
 .share-actions .primary-button {
   flex: 1;
 }
+
+/* Currency preferences — Tommy. */
+.currency-switch { width: 84px; flex-shrink: 0; }
+.exchange-notice { margin: 0 0 20px; line-height: 1.6; }
+.exchange-notice a { text-decoration: underline; }
+.header-actions { flex-wrap: wrap; }

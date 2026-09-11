@@ -7,7 +7,7 @@ export async function listEntries(
 ): Promise<Entry[]> {
   const result = await getDatabase()
     .prepare(
-      "SELECT id, date, category, amount, note FROM journal_entries WHERE user_id = ? AND date >= ? AND date < ? ORDER BY date DESC, category, id",
+      "SELECT id, date, category, amount, currency, note FROM journal_entries WHERE user_id = ? AND date >= ? AND date < ? ORDER BY date DESC, category, id",
     )
     .bind(userId, moveMonth(month, -11) + "-01", moveMonth(month, 1) + "-01")
     .all<Entry>();
@@ -16,7 +16,7 @@ export async function listEntries(
 export async function saveEntry(userId: string, entry: Entry) {
   await getDatabase()
     .prepare(
-      "INSERT INTO journal_entries (user_id, id, date, category, amount, note) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(user_id, id) DO UPDATE SET date = excluded.date, category = excluded.category, amount = excluded.amount, note = excluded.note",
+      "INSERT INTO journal_entries (user_id, id, date, category, amount, currency, note) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(user_id, id) DO UPDATE SET date = excluded.date, category = excluded.category, amount = excluded.amount, currency = excluded.currency, note = excluded.note",
     )
     .bind(
       userId,
@@ -24,6 +24,7 @@ export async function saveEntry(userId: string, entry: Entry) {
       entry.date,
       entry.category,
       entry.amount,
+      entry.currency,
       entry.note,
     )
     .run();

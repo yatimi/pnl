@@ -30,6 +30,9 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
+  currencies,
+  currencySymbols,
+  type Currency,
   categories,
   daysInMonth,
   parseAmount,
@@ -59,6 +62,7 @@ export default function EntryEditor({
     [category, setCategory] = useState<Category>(
       initial?.category ?? "trading",
     );
+  const [currency, setCurrency] = useState<Currency>(initial?.currency ?? "USD");
   const [amount, setAmount] = useState(
       initial ? String(Math.abs(initial.amount) / 100) : "",
     ),
@@ -95,6 +99,7 @@ export default function EntryEditor({
         category,
         amount: category === "trading" && sign === "loss" ? -minor : minor,
         note,
+        currency,
       });
       onClose();
     } catch (e) {
@@ -202,11 +207,18 @@ export default function EntryEditor({
                 </label>
               </RadioGroup>
             )}
+            <div className="field">
+              <span id="entry-currency-label">{t("entryCurrency")}</span>
+              <Select value={currency} onValueChange={(value) => setCurrency(value as Currency)} disabled={busy}>
+                <SelectTrigger aria-labelledby="entry-currency-label"><SelectValue /></SelectTrigger>
+                <SelectContent>{currencies.map((value) => <SelectItem key={value} value={value}>{value} / {currencySymbols[value]}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
             <label>
-              {t("amountUsd")}
+              {t("amount")} ({currency})
               <div className="amount-field">
                 <span>
-                  {sign === "loss" && category === "trading" ? "−" : "+"}$
+                  {sign === "loss" && category === "trading" ? "−" : "+"}{currencySymbols[currency]}
                 </span>
                 <input
                   aria-label={t("amountLabel")}

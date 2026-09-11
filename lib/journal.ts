@@ -1,4 +1,10 @@
 // Created by Tommy.
+export const currencies = ["USD", "EUR", "UAH"] as const;
+export type Currency = (typeof currencies)[number];
+export const currencySymbols: Record<Currency, string> = { USD: "$", EUR: "€", UAH: "₴" };
+export function isCurrency(value: unknown): value is Currency {
+  return typeof value === "string" && currencies.includes(value as Currency);
+}
 export const categories = {
   trading: "Trading",
   salary: "Salary",
@@ -10,6 +16,7 @@ export type Entry = {
   date: string;
   category: Category;
   amount: number;
+  currency: Currency;
   note: string;
 };
 export const entryIdPattern = /^[a-f0-9]{32}$/;
@@ -45,21 +52,21 @@ export function monthLabel(month: string, locale = "en-US") {
     })
     .replace(" г.", "");
 }
-export function money(amount: number, signed = true, decimals = true) {
+export function money(amount: number, signed = true, decimals = true, currency: Currency = "USD") {
   return (
     (amount < 0 ? "−" : signed && amount > 0 ? "+" : "") +
-    "$" +
+    currencySymbols[currency] +
     (Math.abs(amount) / 100).toLocaleString("en-US", {
       minimumFractionDigits: decimals ? 2 : 0,
       maximumFractionDigits: 2,
     })
   );
 }
-export function compactMoney(amount: number) {
-  if (Math.abs(amount) < 100000) return money(amount, true, false);
+export function compactMoney(amount: number, currency: Currency = "USD") {
+  if (Math.abs(amount) < 100000) return money(amount, true, false, currency);
   return (
     (amount < 0 ? "−" : "+") +
-    "$" +
+    currencySymbols[currency] +
     (Math.abs(amount) / 100).toLocaleString("en-US", {
       notation: "compact",
       maximumFractionDigits: 1,
@@ -86,6 +93,7 @@ export function validateEntry(input: unknown): Entry | null {
     typeof v.amount !== "number" ||
     !Number.isSafeInteger(v.amount) ||
     Math.abs(v.amount) > 99999999999 ||
+    (v.currency !== undefined && !isCurrency(v.currency)) ||
     typeof v.note !== "string" ||
     v.note.length > 500
   )
@@ -96,6 +104,7 @@ export function validateEntry(input: unknown): Entry | null {
     date: v.date,
     category: v.category as Category,
     amount: v.amount,
+    currency: (v.currency ?? "USD") as Currency,
     note: v.note.trim(),
   };
 }
@@ -155,6 +164,7 @@ export function demoEntries(): Entry[] {
       date: `${month}-${String(index + 1).padStart(2, "0")}`,
       category: "trading" as const,
       amount,
+      currency: "USD" as const,
       note: "",
     })),
   );

@@ -18,6 +18,7 @@ export const journalEntries = sqliteTable(
     category: text("category", {
       enum: ["trading", "salary", "other"],
     }).notNull(),
+    currency: text("currency", { enum: ["USD", "EUR", "UAH"] }).notNull().default("USD"),
     amount: integer("amount").notNull(),
     note: text("note").notNull().default(""),
   },

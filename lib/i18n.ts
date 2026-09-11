@@ -1,6 +1,13 @@
 // Created by Tommy.
 export const messages = {
   en: {
+    displayCurrency: "Display currency",
+    entryCurrency: "Entry currency",
+    nbuRates: "NBU rates",
+    conversionHint: "Converted at the latest rate, not the entry-date rate. Original amounts stay unchanged.",
+    ratesLoading: "Loading exchange rates…",
+    ratesUnavailable: "Exchange rates unavailable. Totals requiring conversion are hidden; original entries remain available.",
+    ratesOld: "Refresh failed; using the rates dated above.",
     shareTitle: "Share PnL",
     shareEntry: "Share this entry",
     shareHint:
@@ -25,7 +32,7 @@ export const messages = {
     addDay: "Add entry",
     demoHeading: "SAMPLE JOURNAL",
     demoHint:
-      "August–September 2026 · Source: USDT, displayed 1:1 in the demo. Changes stay out of your journal.",
+      "August–September 2026 · Source: USDT, recorded as USD 1:1 in the demo. Changes stay out of your journal.",
     calendar: "Calendar",
     analytics: "Analytics",
     entries: "Entries",
@@ -151,6 +158,13 @@ export const messages = {
     deleteRetry: "Could not delete the entry. Please try again.",
   },
   ru: {
+    displayCurrency: "Валюта отображения",
+    entryCurrency: "Валюта записи",
+    nbuRates: "Курс НБУ",
+    conversionHint: "Пересчёт по последнему курсу, не на дату записи. Исходные суммы не меняются.",
+    ratesLoading: "Загружаем курс валют…",
+    ratesUnavailable: "Курс недоступен. Итоги, требующие пересчёта, скрыты; исходные записи доступны.",
+    ratesOld: "Не удалось обновить курс; используем курс на указанную дату.",
     shareTitle: "Поделиться PnL",
     shareEntry: "Поделиться записью",
     shareHint:
