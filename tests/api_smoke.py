@@ -36,8 +36,8 @@ def request(method, path, body=None, user=None, origin=None):
         raise AssertionError(f'{method} {path}: HTTP {response.status}, non-JSON response: {raw[:500]!r}') from error
     return response.status, result
 
-entry = {'id': uuid.uuid4().hex, 'date': '2026-09-01', 'category': 'trading', 'amount': 10000, 'note': '<script>text only</script>'}
-second = {**entry, 'id': uuid.uuid4().hex, 'amount': -100000, 'note': 'second entry'}
+entry = {'id': uuid.uuid4().hex, 'date': '2026-09-01', 'category': 'trading', 'currency': 'USD', 'amount': 10000, 'note': '<script>text only</script>'}
+second = {**entry, 'id': uuid.uuid4().hex, 'amount': -100000, 'currency': 'EUR', 'note': 'second entry'}
 salary = {**entry, 'id': uuid.uuid4().hex, 'category': 'salary', 'amount': 250000, 'note': ''}
 def records(user):
     status, result = request('GET', '/api/entries?month=2026-09', user=user)
@@ -53,6 +53,7 @@ try:
     assert request('PUT', '/api/entries', {**entry, 'amount': 1.5}, user_a)[0] == 400
     assert request('PUT', '/api/entries', {**entry, 'id': 'invalid'}, user_a)[0] == 400
     assert request('GET', '/api/entries?month=invalid', user=user_a)[0] == 400
+    assert request('PUT', '/api/entries', {**entry, 'currency': 'GBP'}, user_a)[0] == 400
     assert request('PUT', '/api/entries', entry, user_a)[0] == 200
     assert request('PUT', '/api/entries', second, user_a)[0] == 200
     assert records(user_a) == {entry['id']: entry, second['id']: second}
@@ -66,6 +67,7 @@ try:
     updated = {**entry, 'amount': -500, 'note': 'Updated', 'date': '2026-09-02', 'category': 'other'}
     assert request('PUT', '/api/entries', updated, user_a)[0] == 400
     updated['amount'] = 500
+    updated['currency'] = 'UAH'
     assert request('PUT', '/api/entries', updated, user_a)[0] == 200
     assert records(user_a) == {entry['id']: updated, second['id']: second}
     assert request('PUT', '/api/entries', salary, user_a)[0] == 200

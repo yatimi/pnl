@@ -10,11 +10,13 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { renderShareCard } from "@/lib/share-card";
-import { monthLabel, type Entry } from "@/lib/journal";
+import { monthLabel, type Currency, type Entry } from "@/lib/journal";
 import { useLanguage } from "./language-provider";
 
 export default function ShareDialog({
   entries,
+  currency,
+  rateDate,
   month,
   entry,
   theme,
@@ -22,6 +24,8 @@ export default function ShareDialog({
   onClose,
 }: {
   entries: Entry[];
+  currency: Currency;
+  rateDate?: string;
   month: string;
   entry?: Entry;
   theme: string;
@@ -41,6 +45,8 @@ export default function ShareDialog({
     if (canvas)
       renderShareCard(canvas, {
         entries,
+        currency,
+        rateDate,
         month,
         entry,
         light: theme === "light",
@@ -65,7 +71,7 @@ export default function ShareDialog({
     return () => {
       cancelled = true;
     };
-  }, [canvas, entries, month, entry, theme, demo, locale, t]);
+  }, [canvas, currency, rateDate, entries, month, entry, theme, demo, locale, t]);
   function download() {
     if (!blob) return;
     const url = URL.createObjectURL(blob);

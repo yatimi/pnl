@@ -24,3 +24,7 @@ connection.execute('INSERT INTO journal_entries (user_id, date, category, amount
 assert connection.execute("SELECT SUM(amount) FROM journal_entries WHERE user_id='user-a' AND date='2026-09-01' AND category='trading'").fetchone()[0] == -90000
 assert connection.execute("SELECT COUNT(*) FROM journal_entries WHERE user_id='user-b'").fetchone()[0] == 1
 print('Migration passed: existing values and owners preserved; unique IDs generated; repeated daily entries accepted.')
+connection.executescript((root / 'drizzle/0002_lonely_firestar.sql').read_text())
+assert connection.execute("SELECT COUNT(*) FROM journal_entries WHERE currency != 'USD'").fetchone()[0] == 0
+assert sorted(connection.execute('SELECT user_id, date, category, amount, note FROM journal_entries WHERE note != ?', ('second entry',)).fetchall()) == sorted(rows)
+print('Currency migration passed: existing amounts and owners retained, USD default applied.')

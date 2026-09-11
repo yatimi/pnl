@@ -1,0 +1,1 @@
+ALTER TABLE `journal_entries` ADD `currency` text DEFAULT 'USD' NOT NULL;
