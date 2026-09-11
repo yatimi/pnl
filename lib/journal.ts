@@ -1,16 +1,25 @@
 // Created by Tommy.
+export const currencies = ["USD", "EUR", "UAH"] as const;
+export type Currency = (typeof currencies)[number];
+export const currencySymbols: Record<Currency, string> = { USD: "$", EUR: "€", UAH: "₴" };
+export function isCurrency(value: unknown): value is Currency {
+  return typeof value === "string" && currencies.includes(value as Currency);
+}
 export const categories = {
-  trading: "Трейдинг",
-  salary: "Зарплата",
-  other: "Другие доходы",
+  trading: "Trading",
+  salary: "Salary",
+  other: "Other income",
 } as const;
 export type Category = keyof typeof categories;
 export type Entry = {
+  id: string;
   date: string;
   category: Category;
   amount: number;
+  currency: Currency;
   note: string;
 };
+export const entryIdPattern = /^[a-f0-9]{32}$/;
 export const datePattern = /^20\d{2}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 export const monthPattern = /^20\d{2}-(0[1-9]|1[0-2])$/;
 export function validDate(value: string) {
@@ -34,30 +43,30 @@ export function daysInMonth(month: string) {
     0,
   ).getDate();
 }
-export function monthLabel(month: string) {
+export function monthLabel(month: string, locale = "en-US") {
   return new Date(month + "-15T12:00:00Z")
-    .toLocaleDateString("ru-RU", {
+    .toLocaleDateString(locale, {
       month: "long",
       year: "numeric",
       timeZone: "UTC",
     })
     .replace(" г.", "");
 }
-export function money(amount: number, signed = true, decimals = true) {
+export function money(amount: number, signed = true, decimals = true, currency: Currency = "USD") {
   return (
     (amount < 0 ? "−" : signed && amount > 0 ? "+" : "") +
-    "$" +
+    currencySymbols[currency] +
     (Math.abs(amount) / 100).toLocaleString("en-US", {
       minimumFractionDigits: decimals ? 2 : 0,
       maximumFractionDigits: 2,
     })
   );
 }
-export function compactMoney(amount: number) {
-  if (Math.abs(amount) < 100000) return money(amount, true, false);
+export function compactMoney(amount: number, currency: Currency = "USD") {
+  if (Math.abs(amount) < 100000) return money(amount, true, false, currency);
   return (
     (amount < 0 ? "−" : "+") +
-    "$" +
+    currencySymbols[currency] +
     (Math.abs(amount) / 100).toLocaleString("en-US", {
       notation: "compact",
       maximumFractionDigits: 1,
@@ -75,6 +84,8 @@ export function validateEntry(input: unknown): Entry | null {
   if (!input || typeof input !== "object") return null;
   const v = input as Record<string, unknown>;
   if (
+    typeof v.id !== "string" ||
+    !entryIdPattern.test(v.id) ||
     typeof v.date !== "string" ||
     !validDate(v.date) ||
     typeof v.category !== "string" ||
@@ -82,15 +93,18 @@ export function validateEntry(input: unknown): Entry | null {
     typeof v.amount !== "number" ||
     !Number.isSafeInteger(v.amount) ||
     Math.abs(v.amount) > 99999999999 ||
+    (v.currency !== undefined && !isCurrency(v.currency)) ||
     typeof v.note !== "string" ||
     v.note.length > 500
   )
     return null;
   if (v.category !== "trading" && v.amount < 0) return null;
   return {
+    id: v.id,
     date: v.date,
     category: v.category as Category,
     amount: v.amount,
+    currency: (v.currency ?? "USD") as Currency,
     note: v.note.trim(),
   };
 }
@@ -128,33 +142,30 @@ export function summarize(entries: Entry[], month: string) {
     drawdown,
   };
 }
-export function demoEntries(month: string): Entry[] {
-  const amounts = [
-    180, -65, 320, 95, 0, 210, -120, 480, 140, -85, 260, 0, 175, -90, 360, 120,
-    0, 410, -150, 285, 90, 0, 195, -70, 310, 160, 0, 225, -110, 340, 80,
-  ];
-  return [-2, -1, 0].flatMap((offset) => {
-    const m = moveMonth(month, offset);
-    const entries: Entry[] = amounts
-      .slice(0, daysInMonth(m))
-      .flatMap((amount, i) =>
-        amount === 0
-          ? []
-          : [
-              {
-                date: `${m}-${String(i + 1).padStart(2, "0")}`,
-                category: "trading" as const,
-                amount: Math.round(amount * (1 + offset * 0.2)) * 100,
-                note: i % 4 === 0 ? "Закрыл позицию по плану." : "",
-              },
-            ],
-      );
-    entries.push({
-      date: m + "-05",
-      category: "salary",
-      amount: 240000,
-      note: "Зарплата",
-    });
-    return entries;
-  });
+// Daily values transcribed from the supplied August/September 2026 calendars.
+// Integer cents preserve the displayed precision; zero is a recorded result.
+export function demoEntries(): Entry[] {
+  const months = {
+    "2026-08": [
+      -57, -3812, -227, 1375, -1045, 16, -1, 16, 0, 0, 0, 0, 0, 0, 0, 2798,
+      -591, 1643, 829, 3018, 49396, -4207, 51108, 16023, -28170, 29864, 53341,
+      -5764, -30582, -50100, -3952,
+    ],
+    "2026-09": [
+      -3200, 0, 31089, 21219, -19292, -84620, 43322, -36996, 10963, -54343, 0,
+    ],
+  };
+  return Object.entries(months).flatMap(([month, amounts]) =>
+    amounts.map((amount, index) => ({
+      id: `${month.replace("-", "")}${String(index + 1).padStart(2, "0")}`.padEnd(
+        32,
+        "0",
+      ),
+      date: `${month}-${String(index + 1).padStart(2, "0")}`,
+      category: "trading" as const,
+      amount,
+      currency: "USD" as const,
+      note: "",
+    })),
+  );
 }

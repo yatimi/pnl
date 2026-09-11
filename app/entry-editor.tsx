@@ -1,9 +1,13 @@
 "use client";
 // Created by Tommy.
 import { useState } from "react";
+import { X } from "lucide-react";
+import { isTranslationKey } from "@/lib/i18n";
+import { useLanguage } from "./language-provider";
 import {
   Dialog,
   DialogContent,
+  DialogClose,
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
@@ -26,6 +30,9 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
+  currencies,
+  currencySymbols,
+  type Currency,
   categories,
   daysInMonth,
   parseAmount,
@@ -35,26 +42,27 @@ import {
 } from "@/lib/journal";
 export default function EntryEditor({
   date: initialDate,
-  category: initialCategory,
-  entries,
+  id,
+  initial,
   demo,
   onClose,
   onSave,
   onDelete,
 }: {
   date: string;
-  category: Category;
-  entries: Entry[];
+  id: string;
+  initial?: Entry;
   demo: boolean;
   onClose: () => void;
   onSave: (entry: Entry) => Promise<void>;
-  onDelete: (date: string, category: Category) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
 }) {
-  const initial = entries.find(
-    (e) => e.date === initialDate && e.category === initialCategory,
-  );
+  const { t } = useLanguage();
   const [date, setDate] = useState(initialDate),
-    [category, setCategory] = useState<Category>(initialCategory);
+    [category, setCategory] = useState<Category>(
+      initial?.category ?? "trading",
+    );
+  const [currency, setCurrency] = useState<Currency>(initial?.currency ?? "USD");
   const [amount, setAmount] = useState(
       initial ? String(Math.abs(initial.amount) / 100) : "",
     ),
@@ -63,18 +71,11 @@ export default function EntryEditor({
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [confirmDelete, setConfirmDelete] = useState(false);
-  const existing = entries.find(
-    (e) => e.date === date && e.category === category,
-  );
+  const existing = initial;
   function selectRecord(nextDate: string, nextCategory: Category) {
-    const next = entries.find(
-      (e) => e.date === nextDate && e.category === nextCategory,
-    );
     setDate(nextDate);
     setCategory(nextCategory);
-    setAmount(next ? String(Math.abs(next.amount) / 100) : "");
-    setNote(next?.note ?? "");
-    setSign(next && next.amount < 0 ? "loss" : "gain");
+    if (nextCategory !== "trading") setSign("gain");
     setError("");
   }
   async function submit(event: React.FormEvent) {
@@ -86,23 +87,23 @@ export default function EntryEditor({
       !validDate(date) ||
       !date.startsWith(initialDate.slice(0, 7))
     ) {
-      setError(
-        "Введи корректную дату и сумму: до 9 цифр и 2 знаков после запятой.",
-      );
+      setError("invalidAmount");
       return;
     }
     setBusy(true);
     setError("");
     try {
       await onSave({
+        id,
         date,
         category,
         amount: category === "trading" && sign === "loss" ? -minor : minor,
         note,
+        currency,
       });
       onClose();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Не удалось сохранить запись.");
+      setError(e instanceof Error ? e.message : "saveFailed");
     } finally {
       setBusy(false);
     }
@@ -112,10 +113,10 @@ export default function EntryEditor({
     setBusy(true);
     setError("");
     try {
-      await onDelete(date, category);
+      await onDelete(id);
       onClose();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Не удалось удалить запись.");
+      setError(e instanceof Error ? e.message : "deleteFailed");
     } finally {
       setBusy(false);
       setConfirmDelete(false);
@@ -130,22 +131,30 @@ export default function EntryEditor({
     >
       <DialogContent
         className="entry-dialog"
-        showCloseButton={!busy}
+        showCloseButton={false}
         onInteractOutside={(event) => event.preventDefault()}
       >
+        <DialogClose asChild>
+          <button
+            className="entry-close"
+            type="button"
+            disabled={busy}
+            aria-label={t("close")}
+          >
+            <X size={16} />
+          </button>
+        </DialogClose>
         <DialogTitle className="dialog-title">
-          {existing ? "Запись дня" : "Как прошёл день?"}
+          {existing ? t("dayEntry") : t("newDay")}
         </DialogTitle>
         <DialogDescription>
-          {demo
-            ? "Пробная запись. Не сохраняется в личный дневник."
-            : "Сумма в USD после комиссий. Заметка — по желанию."}
+          {demo ? t("demoEntryHint") : t("entryHint")}
         </DialogDescription>
         <form onSubmit={submit} className="entry-form">
           <fieldset disabled={busy}>
             <div className="form-row">
               <label>
-                Дата
+                {t("date")}
                 <input
                   type="date"
                   value={date}
@@ -160,7 +169,7 @@ export default function EntryEditor({
                 />
               </label>
               <div className="field">
-                <span id="category-label">Источник</span>
+                <span id="category-label">{t("source")}</span>
                 <Select
                   value={category}
                   onValueChange={(v) => selectRecord(date, v as Category)}
@@ -170,9 +179,9 @@ export default function EntryEditor({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(categories).map(([key, label]) => (
+                    {Object.entries(categories).map(([key]) => (
                       <SelectItem key={key} value={key}>
-                        {label}
+                        {t(key as Category)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -184,28 +193,35 @@ export default function EntryEditor({
                 className="sign-options"
                 value={sign}
                 onValueChange={setSign}
-                aria-label="Результат дня"
+                aria-label={t("dayResult")}
               >
                 <label
                   className={sign === "gain" ? "selected gain-choice" : ""}
                 >
-                  <RadioGroupItem value="gain" /> + Прибыль
+                  <RadioGroupItem value="gain" /> {t("profit")}
                 </label>
                 <label
                   className={sign === "loss" ? "selected loss-choice" : ""}
                 >
-                  <RadioGroupItem value="loss" /> − Убыток
+                  <RadioGroupItem value="loss" /> {t("loss")}
                 </label>
               </RadioGroup>
             )}
+            <div className="field">
+              <span id="entry-currency-label">{t("entryCurrency")}</span>
+              <Select value={currency} onValueChange={(value) => setCurrency(value as Currency)} disabled={busy}>
+                <SelectTrigger aria-labelledby="entry-currency-label"><SelectValue /></SelectTrigger>
+                <SelectContent>{currencies.map((value) => <SelectItem key={value} value={value}>{value} / {currencySymbols[value]}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
             <label>
-              Сумма, USD
+              {t("amount")} ({currency})
               <div className="amount-field">
                 <span>
-                  {sign === "loss" && category === "trading" ? "−" : "+"}$
+                  {sign === "loss" && category === "trading" ? "−" : "+"}{currencySymbols[currency]}
                 </span>
                 <input
-                  aria-label="Сумма в долларах"
+                  aria-label={t("amountLabel")}
                   inputMode="decimal"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
@@ -217,23 +233,22 @@ export default function EntryEditor({
               </div>
             </label>
             <label>
-              Заметка <span className="muted small">необязательно</span>
+              {t("note")}
+              <span className="muted small">{t("optional")}</span>
               <textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                placeholder="Что стоит запомнить?"
+                placeholder={t("notePlaceholder")}
                 rows={3}
                 maxLength={500}
               />
             </label>
             <p className="small muted">
-              {existing
-                ? "Сохранение обновит запись этого источника за выбранный день."
-                : "За день можно записать трейдинг, зарплату и другой доход отдельно."}
+              {existing ? t("updateHint") : t("sourceHint")}
             </p>
             {error && (
               <p className="form-error" role="alert">
-                {error}
+                {t(isTranslationKey(error) ? error : "requestFailed")}
               </p>
             )}
             <div className="form-actions">
@@ -243,11 +258,11 @@ export default function EntryEditor({
                   className="text-button negative"
                   onClick={() => setConfirmDelete(true)}
                 >
-                  Удалить
+                  {t("delete")}
                 </button>
               )}
               <button type="submit" className="primary-button">
-                {busy ? "Сохраняем…" : "Сохранить запись"}
+                {busy ? t("saving") : t("save")}
               </button>
             </div>
           </fieldset>
@@ -255,14 +270,15 @@ export default function EntryEditor({
         <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Удалить запись?</AlertDialogTitle>
+              <AlertDialogTitle>{t("deleteTitle")}</AlertDialogTitle>
               <AlertDialogDescription>
-                Будет удалён только источник «{categories[category]}» за {date}.
-                Другие записи останутся.
+                {t("deleteDescription", { source: t(category), date })}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={busy}>Отмена</AlertDialogCancel>
+              <AlertDialogCancel disabled={busy}>
+                {t("cancel")}
+              </AlertDialogCancel>
               <AlertDialogAction
                 disabled={busy}
                 onClick={(event) => {
@@ -270,7 +286,7 @@ export default function EntryEditor({
                   void remove();
                 }}
               >
-                Удалить
+                {t("delete")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

@@ -1,14 +1,19 @@
 "use client";
 // Created by Tommy.
 import { useState } from "react";
-import { daysInMonth, money, summarize, type Entry } from "@/lib/journal";
+import { useLanguage } from "./language-provider";
+import { daysInMonth, money as formatMoney, summarize, type Currency, type Entry } from "@/lib/journal";
 export default function EquityChart({
   entries,
   month,
+  currency,
 }: {
   entries: Entry[];
   month: string;
+  currency: Currency;
 }) {
+  const money = (amount: number, signed = true, decimals = true) => formatMoney(amount, signed, decimals, currency);
+  const { t, locale } = useLanguage();
   const [hover, setHover] = useState<number | null>(null);
   const { daily } = summarize(entries, month);
   const days = daysInMonth(month);
@@ -30,8 +35,8 @@ export default function EquityChart({
   return (
     <section className="chart-panel">
       <div className="section-heading">
-        <h2>Кривая результата</h2>
-        <span className="small muted">Накопленный PnL · USD</span>
+        <h2>{t("curve")}</h2>
+        <span className="small muted">{t("cumulativePnl")}</span>
       </div>
       <div className="chart-wrap">
         <div className="chart-labels">
@@ -44,7 +49,7 @@ export default function EquityChart({
           viewBox="0 0 1000 180"
           preserveAspectRatio="none"
           role="img"
-          aria-label={`Накопленный торговый PnL за ${month}: ${money(total)}. Значения по дням доступны в календаре.`}
+          aria-label={t("chartLabel", { month, amount: money(total) })}
           onPointerMove={(e) => {
             const rect = e.currentTarget.getBoundingClientRect();
             setHover(
@@ -82,13 +87,19 @@ export default function EquityChart({
         {hover !== null && (
           <div className="chart-tooltip">
             {hover === 0
-              ? "Начало месяца"
-              : `${String(hover).padStart(2, "0")}.${month.slice(5)}`}{" "}
+              ? t("monthStart")
+              : new Date(
+                  `${month}-${String(hover).padStart(2, "0")}T12:00:00Z`,
+                ).toLocaleDateString(locale, {
+                  day: "numeric",
+                  month: "short",
+                  timeZone: "UTC",
+                })}{" "}
             · {money(points[hover])}
           </div>
         )}
         {daily.size === 0 && (
-          <div className="chart-empty">Здесь появится твоя история</div>
+          <div className="chart-empty">{t("chartEmpty")}</div>
         )}
       </div>
       <div className="chart-dates">

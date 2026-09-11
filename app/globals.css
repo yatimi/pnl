@@ -587,6 +587,37 @@ h1 {
   align-items: center;
   gap: 18px;
 }
+.language-switch {
+  height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  padding: 3px;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.language-switch [data-slot="toggle-group-item"] {
+  height: 30px;
+  min-width: 36px;
+  padding: 0 7px;
+  border-radius: 0;
+  color: var(--muted-foreground);
+  font: 14px var(--font-mono);
+}
+.language-switch [data-slot="toggle-group-item"][data-state="on"] {
+  background: var(--secondary);
+  color: var(--positive);
+}
+.entry-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: grid;
+  place-items: center;
+  padding: 4px;
+  color: var(--muted-foreground);
+  background: transparent;
+  border: 0;
+}
 .demo-button {
   color: var(--muted-foreground);
   font: 14px var(--font-mono);
@@ -889,23 +920,39 @@ h1 {
 .amount-field {
   display: flex;
   align-items: center;
+  gap: 8px;
+  min-width: 0;
   border: 1px solid var(--input);
   background: var(--card);
   padding: 6px 14px;
 }
+.amount-field:focus-within {
+  border-color: var(--ring);
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
 .amount-field span {
+  flex: 0 0 auto;
+  white-space: nowrap;
   font:
     30px Pixelify,
     monospace;
   color: var(--muted-foreground);
 }
 .amount-field input {
+  flex: 1 1 0;
+  width: 0;
+  padding-inline: 0;
   border: 0;
   background: none;
   font:
     40px Pixelify,
     monospace;
   min-width: 0;
+}
+.amount-field input:focus {
+  outline: none;
+  box-shadow: none;
 }
 .form-actions {
   display: flex;
@@ -1020,3 +1067,47 @@ h1 {
   max-width: 100%;
   overflow-wrap: anywhere;
 }
+
+@media (max-width: 540px) {
+  .topbar {
+    gap: 8px;
+    padding-inline: 16px;
+  }
+  .brand {
+    font-size: 40px;
+  }
+  .header-actions {
+    gap: 10px;
+  }
+  .demo-button {
+    font-size: 12px;
+  }
+}
+
+/* Share cards */
+.share-dialog {
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+}
+.share-preview {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  border: 1px solid var(--border);
+}
+.share-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.share-actions .primary-button {
+  flex: 1;
+}
+
+/* Currency preferences — Tommy. */
+.currency-switch { width: 84px; flex-shrink: 0; }
+.exchange-notice { margin: 0 0 20px; line-height: 1.6; }
+.exchange-notice a { text-decoration: underline; }
+.header-actions { flex-wrap: wrap; }
