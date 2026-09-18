@@ -846,7 +846,50 @@ h1 {
   border: 1px solid var(--border);
   border-radius: 0;
   box-shadow: 6px 6px 0 var(--border);
-  padding: 28px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 2rem);
+  overflow: hidden;
+}
+.entry-header {
+  flex-shrink: 0;
+  display: grid;
+  gap: 8px;
+  padding-right: 24px;
+}
+.entry-dialog .entry-form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.entry-fields {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px;
+}
+.entry-dialog .entry-form fieldset {
+  gap: 16px;
+}
+.entry-footer {
+  flex-shrink: 0;
+  display: grid;
+  gap: 12px;
+  border-top: 1px solid var(--border);
+  margin-top: 16px;
+  padding-top: 16px;
+}
+.entry-dialog .form-row {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.entry-dialog .form-row > * {
+  min-width: 0;
+}
+@media (max-width: 380px) {
+  .entry-dialog .form-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 .dialog-title {
   font-family: Pixelify, monospace;
