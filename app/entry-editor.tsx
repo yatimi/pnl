@@ -150,108 +150,114 @@ export default function EntryEditor({
             <X size={16} />
           </button>
         </DialogClose>
-        <DialogTitle className="dialog-title">
-          {existing ? t("dayEntry") : t("newDay")}
-        </DialogTitle>
-        <DialogDescription>
-          {demo ? t("demoEntryHint") : t("entryHint")}
-        </DialogDescription>
+        <div className="entry-header">
+          <DialogTitle className="dialog-title">
+            {existing ? t("dayEntry") : t("newDay")}
+          </DialogTitle>
+          <DialogDescription>
+            {demo ? t("demoEntryHint") : t("entryHint")}
+          </DialogDescription>
+        </div>
         <form onSubmit={submit} className="entry-form">
-          <fieldset disabled={busy}>
-            <div className="form-row">
-              <label>
-                {t("date")}
-                <input
-                  type="date"
-                  value={date}
-                  required
-                  min={initialDate.slice(0, 7) + "-01"}
-                  max={
-                    initialDate.slice(0, 7) +
-                    "-" +
-                    daysInMonth(initialDate.slice(0, 7))
-                  }
-                  onChange={(e) => selectRecord(e.target.value, category)}
-                />
-              </label>
-              <div className="field">
-                <span id="category-label">{t("source")}</span>
-                <Select
-                  value={category}
-                  onValueChange={(v) => selectRecord(date, v as Category)}
-                  disabled={busy}
+          <div className="entry-fields">
+            <fieldset disabled={busy}>
+              <div className="form-row">
+                <label>
+                  {t("date")}
+                  <input
+                    type="date"
+                    value={date}
+                    required
+                    min={initialDate.slice(0, 7) + "-01"}
+                    max={
+                      initialDate.slice(0, 7) +
+                      "-" +
+                      daysInMonth(initialDate.slice(0, 7))
+                    }
+                    onChange={(e) => selectRecord(e.target.value, category)}
+                  />
+                </label>
+                <div className="field">
+                  <span id="category-label">{t("source")}</span>
+                  <Select
+                    value={category}
+                    onValueChange={(v) => selectRecord(date, v as Category)}
+                    disabled={busy}
+                  >
+                    <SelectTrigger aria-labelledby="category-label">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(categories).map(([key]) => (
+                        <SelectItem key={key} value={key}>
+                          {t(key as Category)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              {category === "trading" && (
+                <RadioGroup
+                  className="sign-options"
+                  value={sign}
+                  onValueChange={setSign}
+                  aria-label={t("dayResult")}
                 >
-                  <SelectTrigger aria-labelledby="category-label">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(categories).map(([key]) => (
-                      <SelectItem key={key} value={key}>
-                        {t(key as Category)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
+                  <label
+                    className={sign === "gain" ? "selected gain-choice" : ""}
+                  >
+                    <RadioGroupItem value="gain" /> {t("profit")}
+                  </label>
+                  <label
+                    className={sign === "loss" ? "selected loss-choice" : ""}
+                  >
+                    <RadioGroupItem value="loss" /> {t("loss")}
+                  </label>
+                </RadioGroup>
+              )}
+              <div className="field">
+                <span id="entry-currency-label">{t("entryCurrency")}</span>
+                <Select value={currency} onValueChange={(value) => setCurrency(value as Currency)} disabled={busy}>
+                  <SelectTrigger aria-labelledby="entry-currency-label"><SelectValue /></SelectTrigger>
+                  <SelectContent>{currencies.map((value) => <SelectItem key={value} value={value}>{value} / {currencySymbols[value]}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-            </div>
-            {category === "trading" && (
-              <RadioGroup
-                className="sign-options"
-                value={sign}
-                onValueChange={setSign}
-                aria-label={t("dayResult")}
-              >
-                <label
-                  className={sign === "gain" ? "selected gain-choice" : ""}
-                >
-                  <RadioGroupItem value="gain" /> {t("profit")}
-                </label>
-                <label
-                  className={sign === "loss" ? "selected loss-choice" : ""}
-                >
-                  <RadioGroupItem value="loss" /> {t("loss")}
-                </label>
-              </RadioGroup>
-            )}
-            <div className="field">
-              <span id="entry-currency-label">{t("entryCurrency")}</span>
-              <Select value={currency} onValueChange={(value) => setCurrency(value as Currency)} disabled={busy}>
-                <SelectTrigger aria-labelledby="entry-currency-label"><SelectValue /></SelectTrigger>
-                <SelectContent>{currencies.map((value) => <SelectItem key={value} value={value}>{value} / {currencySymbols[value]}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <label>
-              {t("amount")} ({currency})
-              <div className="amount-field">
-                <span>
-                  {sign === "loss" && category === "trading" ? "−" : "+"}{currencySymbols[currency]}
-                </span>
-                <input
-                  aria-label={t("amountLabel")}
-                  inputMode="decimal"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="0.00"
-                  required
-                  autoFocus
-                  maxLength={12}
+              <label>
+                {t("amount")} ({currency})
+                <div className="amount-field">
+                  <span>
+                    {sign === "loss" && category === "trading" ? "−" : "+"}{currencySymbols[currency]}
+                  </span>
+                  <input
+                    aria-label={t("amountLabel")}
+                    inputMode="decimal"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder="0.00"
+                    required
+                    autoFocus
+                    maxLength={12}
+                  />
+                </div>
+              </label>
+              <label>
+                {t("note")}
+                <span className="muted small">{t("optional")}</span>
+                <textarea
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder={t("notePlaceholder")}
+                  rows={3}
+                  maxLength={500}
                 />
-              </div>
-            </label>
-            <label>
-              {t("note")}
-              <span className="muted small">{t("optional")}</span>
-              <textarea
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder={t("notePlaceholder")}
-                rows={3}
-                maxLength={500}
-              />
-            </label>
-            <p className="small muted">
-              {existing ? t("updateHint") : t("sourceHint")}
-            </p>
+              </label>
+              <p className="small muted">
+                {existing ? t("updateHint") : t("sourceHint")}
+              </p>
+            </fieldset>
+          </div>
+          <div className="entry-footer">
             {error && (
               <p className="form-error" role="alert">
                 {t(isTranslationKey(error) ? error : "requestFailed")}
@@ -262,16 +268,17 @@ export default function EntryEditor({
                 <button
                   type="button"
                   className="text-button negative"
+                  disabled={busy}
                   onClick={() => setConfirmDelete(true)}
                 >
                   {t("delete")}
                 </button>
               )}
-              <button type="submit" className="primary-button">
+              <button type="submit" className="primary-button" disabled={busy}>
                 {busy ? t("saving") : t("save")}
               </button>
             </div>
-          </fieldset>
+          </div>
         </form>
         <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
           <AlertDialogContent>
