@@ -1156,3 +1156,30 @@ h1 {
 .auth-panel .entry-form { margin-top: 24px; }
 .auth-panel .primary-button { width: 100%; justify-content: center; margin-top: 8px; }
 .auth-links { display: flex; flex-wrap: wrap; gap: 16px; margin-block: 20px; }
+
+/* Period summaries and optional market overview. */
+.period-toolbar, .period-options, .custom-period, .market-controls {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+}
+.period-toolbar { margin: 18px 0 24px; }
+.period-options button, .market-controls button { padding: 7px 10px; border: 1px solid var(--border); }
+.period-options button[aria-pressed="true"], .market-controls button[aria-pressed="true"] { color: var(--positive); border-color: var(--positive); }
+.custom-period input { background: var(--background); color: var(--foreground); border: 1px solid var(--border); padding: 6px; max-width: 155px; }
+.winrate-bar { display: flex; height: 5px; gap: 2px; margin: 10px 0; background: var(--border); }
+.win-segment { background: var(--positive); }.loss-segment { background: var(--negative); }.flat-segment { background: var(--muted-foreground); }
+.calendar-with-weeks { grid-template-columns: repeat(7, minmax(0, 1fr)) minmax(65px, .85fr); }
+.week-total { min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 10px; padding: 6px; border-left: 1px solid var(--border); font: 12px var(--font-mono); }
+.week-total strong { overflow-wrap: anywhere; }
+.out-of-period { opacity: .4; }
+.market-panel { margin-top: 28px; border: 1px solid var(--border); padding: 18px; }
+.market-panel summary { cursor: pointer; }.market-panel summary span { margin-left: 10px; }
+.market-content { padding-top: 16px; }.market-content > p { margin-top: 12px; }
+.market-list { list-style: none; padding: 0; margin: 12px 0; }
+.market-list li { display: grid; grid-template-columns: 1fr 1fr 90px; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); font: 13px var(--font-mono); }
+.market-list li > :not(:first-child) { text-align: right; }
+@media (max-width: 600px) {
+  .calendar-with-weeks { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .calendar-with-weeks > .weekday:nth-child(8) { display: none; }
+  .week-total { grid-column: 1 / -1; flex-direction: row; justify-content: space-between; border-left: 0; padding: 7px 4px; }
+  .market-list li { grid-template-columns: 1fr 1fr 75px; gap: 6px; }
+}

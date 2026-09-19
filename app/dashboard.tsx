@@ -1,6 +1,6 @@
 "use client";
 // Created by Tommy.
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { isLanguage, isTranslationKey } from "@/lib/i18n";
 import { useLanguage } from "./language-provider";
 import { convertEntry, type ExchangeRates } from "@/lib/exchange";
@@ -32,6 +32,8 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import EntryEditor from "./entry-editor";
 import ShareDialog from "./share-dialog";
 import EquityChart from "./equity-chart";
+import MarketWidget from "./market-widget";
+import PeriodSelector from "./period-selector";
 import {
   compactMoney as formatCompactMoney,
   currencies,
@@ -46,6 +48,10 @@ import {
   monthPattern,
   moveMonth,
   summarize,
+  periodRange,
+  inRange,
+  shiftDate,
+  type Period,
   validateEntry,
   type Entry,
 } from "@/lib/journal";
@@ -100,6 +106,10 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
       .toUpperCase(),
   );
   const [month, setMonth] = useState(() => initialDemo ? "2026-09" : localDate().slice(0, 7));
+  const [period, setPeriod] = useState<Period>("month");
+  const [custom, setCustom] = useState({ start: localDate(), end: localDate() });
+  const [weekAnchor, setWeekAnchor] = useState(() => initialDemo ? "2026-09-11" : localDate());
+  const anchor = period === "week" ? weekAnchor : month === localDate().slice(0, 7) ? localDate() : month + "-01";
   const [entries, setEntries] = useState<Entry[]>([]),
     [demo, setDemo] = useState(initialDemo),
     [demoData, setDemoData] = useState<Entry[]>(() => initialDemo ? demoEntries() : []);
@@ -137,7 +147,7 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
     const controller = new AbortController();
     setLoading(true);
     setError("");
-    api(`/api/entries?month=${month}`, { signal: controller.signal })
+    api(`/api/entries?month=${localDate().slice(0, 7)}&all=true`, { signal: controller.signal })
       .then((data) => {
         if (
           !Array.isArray(data.entries) ||
@@ -153,7 +163,7 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [month, demo, reload]);
+  }, [demo, reload]);
   const originalRecords: Entry[] = demo
     ? demoData.map((entry) => ({
         ...entry,
@@ -168,10 +178,13 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
   const needsConversion = originalRecords.some((entry) => (entry.currency ?? "USD") !== currency);
   const conversionUnavailable = needsConversion && !exchange;
   const records = conversionUnavailable ? [] : originalRecords.map((entry) => convertEntry(entry, currency, exchange));
-  const stats = summarize(records, month),
+  const range = periodRange(period, anchor, records, custom);
+  const periodLabel = `${range.start} – ${range.end}`;
+  const calendarStats = summarize(records, month);
+  const stats = summarize(records, range),
     prev = summarize(records, moveMonth(month, -1));
   const current = records
-    .filter((e) => e.date.startsWith(month))
+    .filter((e) => inRange(e.date, range))
     .sort(
       (a, b) =>
         b.date.localeCompare(a.date) ||
@@ -191,6 +204,15 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
     ...monthlyStats.map((value) => Math.abs(value.total)),
   );
   const unavailable = loading || !!error || conversionUnavailable;
+  function movePeriod(direction: number) {
+    if (period === "week") {
+      const date = shiftDate(weekAnchor, direction * 7);
+      setWeekAnchor(date);
+      setMonth(date.slice(0, 7));
+    } else {
+      setMonth(moveMonth(month, direction * (period === "year" ? 12 : 1)));
+    }
+  }
   function openDay(date: string, trigger: HTMLButtonElement) {
     setEditor({ id: crypto.randomUUID().replaceAll("-", ""), date, trigger });
   }
@@ -199,10 +221,12 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
       if (initialDemo) { window.location.assign("/sign-in"); return; }
       setDemo(false);
       setMonth(localDate().slice(0, 7));
+      setWeekAnchor(localDate());
     } else {
       const m = "2026-09";
       setDemoData(demoEntries());
       setMonth(m);
+      setWeekAnchor("2026-09-11");
       setDemo(true);
     }
   }
@@ -216,6 +240,7 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
     if (demo) setDemoData(update);
     else setEntries(update);
     setMonth(entry.date.slice(0, 7));
+    setWeekAnchor(entry.date);
     toast.success(demo ? t("demoSaved") : t("saved"));
   }
   async function remove(id: string) {
@@ -271,6 +296,7 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
               throw new Error(t("invalidMonth"));
             flushSync(() => {
               setMonth(value);
+              setPeriod("month");
               setView("calendar");
             });
             return { month: value, status: "month_selected" };
@@ -397,24 +423,32 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
             <div className="month-switch">
               <button
                 className="icon-button"
-                disabled={month === "2000-01"}
-                onClick={() => setMonth(moveMonth(month, -1))}
-                aria-label={t("previousMonth")}
+                disabled={period === "year" ? month.startsWith("2000") : period === "week" ? weekAnchor <= "2000-01-07" : month === "2000-01"}
+                onClick={() => movePeriod(-1)}
+                aria-label={t("previousPeriod")}
               >
                 <ChevronLeft size={18} />
               </button>
               <span>{monthLabel(month, locale)}</span>
               <button
                 className="icon-button"
-                disabled={month === "2099-12"}
-                onClick={() => setMonth(moveMonth(month, 1))}
-                aria-label={t("nextMonth")}
+                disabled={period === "year" ? month.startsWith("2099") : period === "week" ? weekAnchor >= "2099-12-25" : month === "2099-12"}
+                onClick={() => movePeriod(1)}
+                aria-label={t("nextPeriod")}
               >
                 <ChevronRight size={18} />
               </button>
             </div>
             <span className="currency-label">{currency} / {currencySymbols[currency]}</span>
           </div>
+          <PeriodSelector period={period} range={range} custom={custom}
+            onSelect={(value) => {
+              setPeriod(value);
+              if (value === "week") setWeekAnchor(month === localDate().slice(0, 7) ? localDate() : month + "-01");
+              setShareCard(null);
+            }}
+            onApply={(value) => { setCustom(value); setMonth(value.start.slice(0, 7)); }}
+          />
           {loading && (
             <p role="status" className="status-message">
               {t("loading")}
@@ -443,7 +477,7 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
                 {metric(money(stats.total))}
               </strong>
               <span>
-                {!unavailable && prev.active > 0
+                {!unavailable && period === "month" && prev.active > 0
                   ? t("monthChange", {
                       amount: money(stats.total - prev.total),
                     })
@@ -456,14 +490,11 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
                 {metric(stats.active ? String(stats.winRate) : "—")}
                 <span className="unit">%</span>
               </strong>
-              <span>
-                {unavailable
-                  ? "…"
-                  : t("winningDays", {
-                      wins: stats.wins,
-                      active: stats.active,
-                    })}
-              </span>
+              <span>{unavailable ? "…" : t("dayBreakdown", { wins: stats.wins, losses: stats.losses, flat: stats.active - stats.wins - stats.losses })}</span>
+              <div className="winrate-bar" aria-hidden="true">
+                <i className="win-segment" style={{ flex: stats.wins }} /><i className="loss-segment" style={{ flex: stats.losses }} /><i className="flat-segment" style={{ flex: stats.active - stats.wins - stats.losses }} />
+              </div>
+              <span className="small muted">{t("winrateHint")}</span>
             </div>
             <div className="stat">
               <p>{t("bestDay")}</p>
@@ -492,7 +523,7 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
           {!unavailable && (
             <>
               <TabsContent value="calendar">
-                <EquityChart entries={records} month={month} currency={currency} />
+                <EquityChart key={periodLabel} entries={records} range={range} currency={currency} />
                 <section className="calendar-panel">
                   <div className="section-heading">
                     <h2>{t("pnlCalendar")}</h2>
@@ -507,33 +538,41 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
                       <span>{t("firstEntryHint")}</span> {t("clickDayHint")}
                     </div>
                   )}
-                  <div className="calendar-grid">
+                  <div className="calendar-grid calendar-with-weeks">
                     {weekdays.map((d) => (
                       <div className="weekday" key={d}>
                         {d}
                       </div>
                     ))}
+                    <div className="weekday">{t("weekTotal")}</div>
                     {Array.from({ length: cells }, (_, i) => {
                       const day = i - offset + 1;
-                      if (day < 1 || day > days)
-                        return (
-                          <div
-                            key={i}
-                            className="day-cell outside"
-                            aria-hidden="true"
-                          />
-                        );
+                      const outside = day < 1 || day > days;
+                      const weekStart = shiftDate(month + "-01", i - i % 7 - offset);
+                      const weekEnd = shiftDate(weekStart, 6);
+                      const weekStats = i % 7 === 6 ? summarize(current, {
+                        start: weekStart < month + "-01" ? month + "-01" : weekStart,
+                        end: weekEnd > `${month}-${days}` ? `${month}-${days}` : weekEnd,
+                      }) : null;
+                      const weekly = weekStats && (
+                        <div className="week-total" aria-label={`${t("weekTotal")} ${weekStart} – ${weekEnd}`}>
+                          <span className="small muted">{t("weekTotal")}</span>
+                          <strong className={weekStats.total < 0 ? "negative" : "positive"}>
+                            {weekStats.active ? compactMoney(weekStats.total) : "—"}
+                          </strong>
+                        </div>
+                      );
+                      if (outside) return <Fragment key={i}><div className="day-cell outside" aria-hidden="true" />{weekly}</Fragment>;
                       const date = `${month}-${String(day).padStart(2, "0")}`,
-                        value = stats.daily.get(date);
-                      const income = current
+                        value = calendarStats.daily.get(date);
+                      const income = records
                         .filter(
                           (e) => e.date === date && e.category !== "trading",
                         )
                         .reduce((s, e) => s + e.amount, 0);
                       return (
-                        <button
-                          key={i}
-                          className={`day-cell ${value === undefined ? "" : value > 0 ? "gain" : value < 0 ? "loss" : ""} ${date === localDate() ? "today" : ""}`}
+                        <Fragment key={i}><button
+                          className={`day-cell ${!inRange(date, range) ? "out-of-period" : ""} ${value === undefined ? "" : value > 0 ? "gain" : value < 0 ? "loss" : ""} ${date === localDate() ? "today" : ""}`}
                           onClick={(event) => openDay(date, event.currentTarget)}
                           aria-label={t("openDay", {
                             day,
@@ -579,7 +618,7 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
                               +$
                             </span>
                           )}
-                        </button>
+                        </button>{weekly}</Fragment>
                       );
                     })}
                   </div>
@@ -587,14 +626,14 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
                 </section>
               </TabsContent>
               <TabsContent value="analytics">
-                <EquityChart entries={records} month={month} currency={currency} />
+                <EquityChart key={periodLabel} entries={records} range={range} currency={currency} />
                 <div className="analytics-grid">
                   <section className="insight-panel">
                     <p className="eyebrow">{t("summaryHeading")}</p>
                     <h2>
                       {stats.active === 0
                         ? t("insufficientEntries")
-                        : stats.total > prev.total && prev.active
+                        : period === "month" && stats.total > prev.total && prev.active
                           ? t("improved")
                           : stats.total > 0
                             ? t("positiveMonth")
@@ -613,7 +652,7 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
                             flat: stats.active - stats.wins - stats.losses,
                           })}
                     </p>
-                    {prev.active > 0 && stats.active > 0 && (
+                    {period === "month" && prev.active > 0 && stats.active > 0 && (
                       <p>
                         {t("previousChange")}{" "}
                         <span
@@ -664,7 +703,7 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
                       return (
                         <button
                           key={m}
-                          onClick={() => setMonth(m)}
+                          onClick={() => { setMonth(m); setPeriod("month"); }}
                           className="month-bar"
                           aria-label={t("openMonthLabel", {
                             month: monthLabel(m, locale),
@@ -802,6 +841,7 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
             </>
           )}
         </Tabs>
+        <MarketWidget />
         <footer className="footer">
           <span>
             <span className="footer-brand">pnl.</span>{" "}
@@ -818,6 +858,7 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
           currency={currency}
           rateDate={needsConversion ? exchange?.date : undefined}
           month={month}
+          range={range}
           entry={shareCard.entry ? records.find((entry) => entry.id === shareCard.entry?.id) : undefined}
           theme={theme}
           demo={demo}

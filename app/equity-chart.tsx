@@ -2,41 +2,39 @@
 // Created by Tommy.
 import { useState } from "react";
 import { useLanguage } from "./language-provider";
-import { daysInMonth, money as formatMoney, summarize, type Currency, type Entry } from "@/lib/journal";
+import { type DateRange, shiftDate, money as formatMoney, summarize, type Currency, type Entry } from "@/lib/journal";
 export default function EquityChart({
   entries,
-  month,
+  range,
   currency,
 }: {
   entries: Entry[];
-  month: string;
+  range: DateRange;
   currency: Currency;
 }) {
   const money = (amount: number, signed = true, decimals = true) => formatMoney(amount, signed, decimals, currency);
   const { t, locale } = useLanguage();
   const [hover, setHover] = useState<number | null>(null);
-  const { daily } = summarize(entries, month);
-  const days = daysInMonth(month);
-  let total = 0;
-  const points = [
-    0,
-    ...Array.from({ length: days }, (_, i) => {
-      total += daily.get(`${month}-${String(i + 1).padStart(2, "0")}`) ?? 0;
-      return total;
-    }),
-  ];
+  const { daily } = summarize(entries, range);
+  const days = Math.round((Date.parse(range.end) - Date.parse(range.start)) / 86400000) + 1;
+  const dates = [...daily.keys()].sort();
+  const points = [0];
+  for (const date of dates) points.push(points[points.length - 1] + (daily.get(date) ?? 0));
+  const total = points[points.length - 1];
+  const dayOffsets = [0, ...dates.map((date) => Math.round((Date.parse(date) - Date.parse(range.start)) / 86400000) + 1)];
+  const hoveredTotal = hover === null ? 0 : points[dayOffsets.findLastIndex((day) => day <= hover)];
   const max = Math.max(...points, 10000),
     min = Math.min(...points, 0),
     span = max - min;
   const y = (v: number) => 170 - ((v - min) / span) * 160;
   const path = points
-    .map((v, i) => (i === 0 ? `M0 ${y(v)}` : `H${(i / days) * 1000} V${y(v)}`))
-    .join(" ");
+    .map((v, i) => (i === 0 ? `M0 ${y(v)}` : `H${(dayOffsets[i] / days) * 1000} V${y(v)}`))
+    .join(" ") + ` H1000`;
   return (
     <section className="chart-panel">
       <div className="section-heading">
         <h2>{t("curve")}</h2>
-        <span className="small muted">{t("cumulativePnl")}</span>
+        <span className="small muted">{t("cumulativePnl") + " · " + currency}</span>
       </div>
       <div className="chart-wrap">
         <div className="chart-labels">
@@ -49,7 +47,7 @@ export default function EquityChart({
           viewBox="0 0 1000 180"
           preserveAspectRatio="none"
           role="img"
-          aria-label={t("chartLabel", { month, amount: money(total) })}
+          aria-label={t("chartLabel", { month: `${range.start} – ${range.end}`, amount: money(total) })}
           onPointerMove={(e) => {
             const rect = e.currentTarget.getBoundingClientRect();
             setHover(
@@ -89,13 +87,13 @@ export default function EquityChart({
             {hover === 0
               ? t("monthStart")
               : new Date(
-                  `${month}-${String(hover).padStart(2, "0")}T12:00:00Z`,
+                  `${shiftDate(range.start, hover - 1)}T12:00:00Z`,
                 ).toLocaleDateString(locale, {
                   day: "numeric",
                   month: "short",
                   timeZone: "UTC",
                 })}{" "}
-            · {money(points[hover])}
+            · {money(hoveredTotal)}
           </div>
         )}
         {daily.size === 0 && (
@@ -103,10 +101,8 @@ export default function EquityChart({
         )}
       </div>
       <div className="chart-dates">
-        <span>01</span>
-        <span>10</span>
-        <span>20</span>
-        <span>{days}</span>
+        <span>{range.start}</span>
+        <span>{range.end}</span>
       </div>
     </section>
   );
