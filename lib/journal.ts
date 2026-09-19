@@ -108,8 +108,33 @@ export function validateEntry(input: unknown): Entry | null {
     note: v.note.trim(),
   };
 }
-export function summarize(entries: Entry[], month: string) {
-  const records = entries.filter((e) => e.date.startsWith(month));
+export type DateRange = { start: string; end: string };
+export type Period = "week" | "month" | "year" | "all" | "custom";
+export function shiftDate(date: string, days: number) {
+  const value = new Date(date + "T12:00:00Z");
+  value.setUTCDate(value.getUTCDate() + days);
+  return value.toISOString().slice(0, 10);
+}
+export function periodRange(period: Period, anchor: string, entries: Entry[], custom: DateRange): DateRange {
+  const month = anchor.slice(0, 7);
+  if (period === "custom") return custom;
+  if (period === "week") {
+    const weekday = (new Date(anchor + "T12:00:00Z").getUTCDay() + 6) % 7;
+    const start = shiftDate(anchor, -weekday);
+    return { start, end: shiftDate(start, 6) };
+  }
+  if (period === "year") return { start: anchor.slice(0, 4) + "-01-01", end: anchor.slice(0, 4) + "-12-31" };
+  if (period === "all") {
+    const dates = entries.map((entry) => entry.date).sort();
+    return { start: dates[0] ?? anchor, end: dates.at(-1) ?? anchor };
+  }
+  return { start: month + "-01", end: month + "-" + daysInMonth(month) };
+}
+export function inRange(date: string, range: DateRange) {
+  return date >= range.start && date <= range.end;
+}
+export function summarize(entries: Entry[], period: string | DateRange) {
+  const records = entries.filter((e) => typeof period === "string" ? e.date.startsWith(period) : inRange(e.date, period));
   const daily = new Map<string, number>();
   for (const e of records.filter((e) => e.category === "trading"))
     daily.set(e.date, (daily.get(e.date) ?? 0) + e.amount);

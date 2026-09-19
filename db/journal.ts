@@ -1,19 +1,19 @@
 // Created by Tommy.
 import { getDatabase } from "./index";
 import { moveMonth, validateEntry, type Entry } from "../lib/journal";
-export async function listEntries(userId: string, month: string): Promise<Entry[]> {
+export async function listEntries(userId: string, month: string, all = false): Promise<Entry[]> {
   const database = await getDatabase();
   const entries: Entry[] = [];
   // PostgREST caps a response; fetch every page before computing journal totals.
   const pageSize = 500;
   for (let offset = 0; ; offset += pageSize) {
-    const { data, error } = await database.from("journal_entries")
+    let query = database.from("journal_entries")
       .select("id,date,category,amount,currency,note")
       .eq("user_id", userId)
-      .gte("date", moveMonth(month, -11) + "-01")
-      .lt("date", moveMonth(month, 1) + "-01")
       .order("date", { ascending: false }).order("category").order("id")
       .range(offset, offset + pageSize - 1);
+    if (!all) query = query.gte("date", moveMonth(month, -11) + "-01").lt("date", moveMonth(month, 1) + "-01");
+    const { data, error } = await query;
     if (error) throw error;
     for (const row of data) {
       const entry = validateEntry(row);

@@ -1,8 +1,9 @@
 // Created by Tommy.
-import { daysInMonth, money, summarize, type Entry, type Currency } from "./journal";
+import { daysInMonth, money, summarize, type Entry, type Currency, type DateRange } from "./journal";
 
 export type ShareCard = {
   month: string;
+  range?: DateRange;
   currency: Currency;
   rateDate?: string;
   entries: Entry[];
@@ -31,7 +32,7 @@ export async function renderShareCard(
   const grid = card.light ? "#d4dacb" : "#2b3028";
   const gain = card.light ? "#284c17" : "#b6f36b";
   const loss = card.light ? "#a63e3a" : "#ef9792";
-  const stats = summarize(card.entries, card.month);
+  const stats = summarize(card.entries, card.range ?? card.month);
   const value = card.entry?.amount ?? stats.total;
   const accent = value < 0 ? loss : gain;
   ctx.fillStyle = bg;
@@ -63,17 +64,11 @@ export async function renderShareCard(
   text(money(value, true, true, card.currency), 72, 472, 132, accent, true);
   text(card.currency + (card.rateDate ? ` · NBP ${card.rateDate}` : ""), 80, 526, 25, muted);
   if (!card.entry) {
-    const days = daysInMonth(card.month);
+    const range = card.range ?? { start: card.month + "-01", end: `${card.month}-${daysInMonth(card.month)}` };
+    const days = Math.round((Date.parse(range.end) - Date.parse(range.start)) / 86400000) + 1;
+    const dates = [...stats.daily.keys()].sort();
     let cumulative = 0;
-    const points = [
-      0,
-      ...Array.from({ length: days }, (_, i) => {
-        cumulative +=
-          stats.daily.get(`${card.month}-${String(i + 1).padStart(2, "0")}`) ??
-          0;
-        return cumulative;
-      }),
-    ];
+    const points = [0, ...dates.map((date) => { cumulative += stats.daily.get(date)!; return cumulative; })];
     const low = Math.min(0, ...points),
       high = Math.max(0, ...points);
     const y = (v: number) =>
@@ -91,14 +86,16 @@ export async function renderShareCard(
     ctx.beginPath();
     ctx.moveTo(80, y(0));
     points.slice(1).forEach((v, i) => {
-      const x = 80 + ((i + 1) / days) * 1040;
+      const offset = Math.round((Date.parse(dates[i]) - Date.parse(range.start)) / 86400000) + 1;
+      const x = 80 + (offset / days) * 1040;
       ctx.lineTo(x, y(points[i]));
       ctx.lineTo(x, y(v));
     });
+    ctx.lineTo(1120, y(value));
     ctx.stroke();
     ctx.fillStyle = accent;
     ctx.fillRect(1110, y(value) - 10, 20, 20);
-    text(`01 — ${days}`, 80, 915, 24, muted);
+    text(`${range.start} — ${range.end}`, 80, 915, 24, muted, false, 540);
     text(`${stats.active} ${card.daysLabel}`, 650, 915, 24, muted, false, 470);
   } else {
     // Pixel divider; a single entry has no price history to chart.

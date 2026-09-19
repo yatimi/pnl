@@ -24,7 +24,7 @@ export async function GET(request: Request) {
   if (!monthPattern.test(month))
     return json({ error: "invalidRequestMonth" }, 400);
   try {
-    return json({ entries: await listEntries(user.userId, month) });
+    return json({ entries: await listEntries(user.userId, month, new URL(request.url).searchParams.get("all") === "true") });
   } catch (error) {
     console.error("Journal load failed", error);
     return json({ error: "loadFailed" }, 503);
