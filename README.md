@@ -58,3 +58,9 @@ Feature branches target `develop`. Wait for `Validate journal`, then merge with 
 ## Attribution
 
 Author: Tommy. Pixelify Sans uses the SIL Open Font License; see `public/pixelify-license.txt`. Demo entries reproduce the supplied August–September 2026 calendars (42 entries), treating the source USDT amounts as USD 1:1 before display conversion. Share cards omit notes and account details; monthly cards contain trading PnL only.
+
+## Periods and market overview
+
+The journal supports Monday–Sunday weeks, months, calendar years, all history, and inclusive custom ranges. The chart, statistics, entry list, and PNG share card use the selected range. Profitable-day percentage includes logged breakeven days in its denominator; it is not a trade win rate. Calendar weekly totals include only the selected days visible in that month. On mobile, totals appear beneath each week. All-history reads remain paginated and restricted to the authenticated owner.
+
+The optional Market panel shows up to five gainers or losers among active Binance spot USDT pairs with at least 1,000,000 USDT in rolling 24-hour quote volume. It loads only while expanded and refreshes every minute. Public data comes from data-api.binance.vision without an API key. Snapshots are cached for one minute, exchange metadata for an hour; failed refreshes show an error and label any retained client snapshot as potentially outdated. Market prices retain sub-cent precision separately from journal amounts, which remain integer cents.

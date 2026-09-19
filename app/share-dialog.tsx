@@ -10,7 +10,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { renderShareCard } from "@/lib/share-card";
-import { monthLabel, type Currency, type Entry } from "@/lib/journal";
+import { daysInMonth, monthLabel, type Currency, type Entry, type DateRange } from "@/lib/journal";
 import { useLanguage } from "./language-provider";
 
 export default function ShareDialog({
@@ -18,6 +18,7 @@ export default function ShareDialog({
   currency,
   rateDate,
   month,
+  range,
   entry,
   theme,
   demo,
@@ -27,6 +28,7 @@ export default function ShareDialog({
   currency: Currency;
   rateDate?: string;
   month: string;
+  range: DateRange;
   entry?: Entry;
   theme: string;
   demo: boolean;
@@ -37,7 +39,7 @@ export default function ShareDialog({
   const [blob, setBlob] = useState<Blob | null>(null);
   const [error, setError] = useState(false);
   const [sharing, setSharing] = useState(false);
-  const filename = `pnl-${entry?.date ?? month}${entry ? "-" + entry.id.slice(0, 8) : ""}.png`;
+  const filename = `pnl-${entry?.date ?? `${range.start}_${range.end}`}${entry ? "-" + entry.id.slice(0, 8) : ""}.png`;
   useEffect(() => {
     let cancelled = false;
     setBlob(null);
@@ -48,6 +50,7 @@ export default function ShareDialog({
         currency,
         rateDate,
         month,
+        range,
         entry,
         light: theme === "light",
         period: entry
@@ -55,7 +58,7 @@ export default function ShareDialog({
               dateStyle: "long",
               timeZone: "UTC",
             })
-          : monthLabel(month, locale),
+          : range.start === month + "-01" && range.end === `${month}-${daysInMonth(month)}` ? monthLabel(month, locale) : `${range.start} – ${range.end}`,
         label: entry ? t(entry.category) : t("tradingPnl"),
         footer: t("shareFooter"),
         demoLabel: demo ? t("demoHeading") : "",
@@ -71,7 +74,7 @@ export default function ShareDialog({
     return () => {
       cancelled = true;
     };
-  }, [canvas, currency, rateDate, entries, month, entry, theme, demo, locale, t]);
+  }, [canvas, currency, rateDate, entries, month, range, entry, theme, demo, locale, t]);
   function download() {
     if (!blob) return;
     const url = URL.createObjectURL(blob);

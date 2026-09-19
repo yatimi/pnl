@@ -12,6 +12,7 @@ entry = {'id': 'a' * 32, 'date': '2026-09-01', 'category': 'trading', 'currency'
 for forged in (False, True):
     for method, path, body in (
         ('GET', '/api/entries?month=2026-09', None),
+        ('GET', '/api/entries?month=2026-09&all=true', None),
         ('PUT', '/api/entries', entry),
         ('DELETE', '/api/entries?id=' + entry['id'], None),
     ):
