@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { flushSync } from "react-dom";
 import {
   Share2,
+  Settings,
   Moon,
   Sun,
   Plus,
@@ -34,6 +35,8 @@ import ShareDialog from "./share-dialog";
 import EquityChart from "./equity-chart";
 import MarketWidget from "./market-widget";
 import PeriodSelector from "./period-selector";
+import ExchangeNotice from "./exchange-notice";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   compactMoney as formatCompactMoney,
   currencies,
@@ -118,6 +121,7 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
   const [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
     [reload, setReload] = useState(0);
+  const [activeDate, setActiveDate] = useState<string | null>(null);
   const [shareCard, setShareCard] = useState<{ entry?: Entry } | null>(null);
   const addEntryButton = useRef<HTMLButtonElement>(null);
   const [editor, setEditor] = useState<{
@@ -332,39 +336,49 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
           >
             {demo ? t("myJournal") : t("demo")}
           </button>
-          <ToggleGroup
-            type="single"
-            className="language-switch"
-            value={language}
-            onValueChange={(value) => {
-              if (isLanguage(value)) setLanguage(value);
-            }}
-            aria-label={t("languageLabel")}
-          >
-            <ToggleGroupItem value="en" lang="en" aria-label="English">
-              EN
-            </ToggleGroupItem>
-            <ToggleGroupItem value="ru" lang="ru" aria-label="Русский">
-              RU
-            </ToggleGroupItem>
-          </ToggleGroup>
-          <Select value={currency} onValueChange={(value) => {
-            if (isCurrency(value)) {
-              setCurrency(value);
-              setShareCard(null);
-              try { localStorage.setItem("pnl-currency", value); } catch {}
-            }
-          }}>
-            <SelectTrigger className="currency-switch" aria-label={t("displayCurrency")}><SelectValue /></SelectTrigger>
-            <SelectContent>{currencies.map((value) => <SelectItem key={value} value={value}>{value}</SelectItem>)}</SelectContent>
-          </Select>
-          <button
-            className="icon-button"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            aria-label={theme === "dark" ? t("lightTheme") : t("darkTheme")}
-          >
-            {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="icon-button" aria-label={t("preferences")} title={t("preferences")}><Settings size={18} /></button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="journal-preferences" aria-label={t("preferences")}>
+              <h2>{t("preferences")}</h2>
+              <div className="preference-controls">
+                <ToggleGroup
+                  type="single"
+                  className="language-switch"
+                  value={language}
+                  onValueChange={(value) => {
+                    if (isLanguage(value)) setLanguage(value);
+                  }}
+                  aria-label={t("languageLabel")}
+                >
+                  <ToggleGroupItem value="en" lang="en" aria-label="English">
+                    EN
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="ru" lang="ru" aria-label="Русский">
+                    RU
+                  </ToggleGroupItem>
+                </ToggleGroup>
+                <Select value={currency} onValueChange={(value) => {
+                  if (isCurrency(value)) {
+                    setCurrency(value);
+                    setShareCard(null);
+                    try { localStorage.setItem("pnl-currency", value); } catch {}
+                  }
+                }}>
+                  <SelectTrigger className="currency-switch" aria-label={t("displayCurrency")}><SelectValue /></SelectTrigger>
+                  <SelectContent>{currencies.map((value) => <SelectItem key={value} value={value}>{value}</SelectItem>)}</SelectContent>
+                </Select>
+                <button
+                  className="icon-button"
+                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                  aria-label={theme === "dark" ? t("lightTheme") : t("darkTheme")}
+                >
+                  {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+                </button>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
       </header>
       <main className="workspace">
@@ -391,18 +405,14 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
             <Plus size={18} /> {t("addDay")}
           </button>
         </div>
-        {demo && (
-          <div className="preview-notice">
-            <span className="positive">{t("demoHeading")}</span>
-            <span>{t("demoHint")}</span>
-          </div>
-        )}
-        <div className="exchange-notice small muted" role="status">
-          {exchange ? <span title={t("conversionHint")}>
-            <a href="https://nbp.pl/en/statistic-and-financial-reporting/rates/table-a/" target="_blank" rel="noreferrer">{t("nbpRates")}</a> · {exchange.date} · 1 EUR = {(exchange.rates.EUR / exchange.rates.USD).toFixed(4)} USD · 1 EUR = {(exchange.rates.EUR / exchange.rates.UAH).toFixed(4)} UAH. {t("conversionHint")}
-          </span> : <span>{ratesError ? t("ratesUnavailable") : t("ratesLoading")}</span>}
-          {ratesError && <button className="text-button" onClick={() => setRatesReload((value) => value + 1)}>{t("retry")}</button>}
-          {ratesError && exchange && <span>{t("ratesOld")}</span>}
+        <div className="workspace-context">
+          {demo && (
+            <details className="preview-notice">
+              <summary>{t("demoHeading")}</summary>
+              <p>{t("demoHint")}</p>
+            </details>
+          )}
+          <ExchangeNotice exchange={exchange} failed={ratesError} onRetry={() => setRatesReload((value) => value + 1)} />
         </div>
         <Tabs value={view} onValueChange={setView} className="journal-tabs">
           <div className="toolbar">
@@ -514,17 +524,15 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
                   : t("noEntries")}
               </span>
             </div>
-            <div className="stat">
-              <p>{t("other")}</p>
-              <strong>{metric(money(stats.income, false))}</strong>
-              <span>{t("salaryAndOther")}</span>
-            </div>
           </section>
+          <div className="income-summary">
+            <span>{t("salaryAndOther")}</span>
+            <strong>{metric(money(stats.income, false))}</strong>
+          </div>
           {!unavailable && (
             <>
-              <TabsContent value="calendar">
-                <EquityChart key={periodLabel} entries={records} range={range} currency={currency} />
-                <section className="calendar-panel">
+              <TabsContent value="calendar" className="calendar-view">
+                <section className="calendar-panel" key={month + periodLabel}>
                   <div className="section-heading">
                     <h2>{t("pnlCalendar")}</h2>
                     <div className="calendar-legend small">
@@ -572,7 +580,11 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
                         .reduce((s, e) => s + e.amount, 0);
                       return (
                         <Fragment key={i}><button
-                          className={`day-cell ${!inRange(date, range) ? "out-of-period" : ""} ${value === undefined ? "" : value > 0 ? "gain" : value < 0 ? "loss" : ""} ${date === localDate() ? "today" : ""}`}
+                          onPointerEnter={() => setActiveDate(date)}
+                          onPointerLeave={() => setActiveDate(null)}
+                          onFocus={() => setActiveDate(date)}
+                          onBlur={() => setActiveDate(null)}
+                          className={`day-cell ${activeDate === date ? "is-active" : ""} ${!inRange(date, range) ? "out-of-period" : ""} ${value === undefined ? "" : value > 0 ? "gain" : value < 0 ? "loss" : ""} ${date === localDate() ? "today" : ""}`}
                           onClick={(event) => openDay(date, event.currentTarget)}
                           aria-label={t("openDay", {
                             day,
@@ -624,6 +636,7 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
                   </div>
                   <p className="calendar-footnote">{t("calendarFootnote")}</p>
                 </section>
+                <EquityChart key={periodLabel} entries={records} range={range} currency={currency} activeDate={activeDate && inRange(activeDate, range) ? activeDate : null} onActiveDateChange={setActiveDate} />
               </TabsContent>
               <TabsContent value="analytics">
                 <EquityChart key={periodLabel} entries={records} range={range} currency={currency} />
