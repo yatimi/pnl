@@ -1205,7 +1205,6 @@ h1 {
 .workspace-context .preview-notice { margin: 0; max-width: 640px; }
 .workspace-context .exchange-notice { margin: 0; }
 .period-toolbar { margin: 10px 0 4px; }
-.preferences-trigger { gap: 8px; padding-inline: 10px; font: 12px var(--font-mono); }
 .journal-preferences { border-radius: 0; max-width: calc(100vw - 32px); }
 .preference-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 16px; }
 .journal-preferences h2 { font-size: 14px; }

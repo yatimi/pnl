@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { flushSync } from "react-dom";
 import {
   Share2,
-  Settings2,
+  Settings,
   Moon,
   Sun,
   Plus,
@@ -338,7 +338,7 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
           </button>
           <Popover>
             <PopoverTrigger asChild>
-              <button className="icon-button preferences-trigger" aria-label={t("preferences")}><span>{currency}</span><Settings2 size={17} /></button>
+              <button className="icon-button" aria-label={t("preferences")} title={t("preferences")}><Settings size={18} /></button>
             </PopoverTrigger>
             <PopoverContent align="end" className="journal-preferences" aria-label={t("preferences")}>
               <h2>{t("preferences")}</h2>
