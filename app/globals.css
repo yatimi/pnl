@@ -613,17 +613,6 @@ h1 {
   background: transparent;
   border: 0;
 }
-.demo-button {
-  color: var(--muted-foreground);
-  font: 14px var(--font-mono);
-  border: 0;
-  background: none;
-  padding: 9px 0;
-}
-.demo-button:hover,
-.demo-button.is-demo {
-  color: var(--positive);
-}
 .journal-tabs {
   gap: 0;
 }
@@ -643,7 +632,7 @@ h1 {
 }
 .view-tabs [data-slot="tabs-trigger"]:after {
   background: var(--positive);
-  bottom: -21px !important;
+  bottom: -13px !important;
 }
 .chart-tooltip {
   position: absolute;
@@ -1115,9 +1104,6 @@ h1 {
   .header-actions {
     gap: 10px;
   }
-  .demo-button {
-    font-size: 12px;
-  }
 }
 
 /* Share cards */
@@ -1204,11 +1190,18 @@ h1 {
 .workspace-context { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 8px 20px; margin-bottom: 12px; }
 .workspace-context .preview-notice { margin: 0; max-width: 640px; }
 .workspace-context .exchange-notice { margin: 0; }
-.period-toolbar { margin: 10px 0 4px; }
+.period-toolbar { margin: 24px 0 8px; }
+.period-options button { text-decoration: none; }
 .journal-preferences { border-radius: 0; max-width: calc(100vw - 32px); }
 .preference-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 16px; }
 .journal-preferences h2 { font-size: 14px; }
 .header-actions { gap: 12px; }
+.header-actions > form { display: flex; }
+.header-actions > .icon-button,
+.header-actions > form .icon-button { width: 40px; height: 40px; border-color: transparent; border-radius: 6px; color: var(--muted-foreground); }
+.header-actions > .icon-button:hover:not(:disabled),
+.header-actions > form .icon-button:hover:not(:disabled),
+.header-actions > .icon-button[data-state="open"] { background: var(--muted); color: var(--foreground); }
 .stats-grid { grid-template-columns: 1.4fr 1fr 1fr; gap: 24px; padding: 20px 0; margin-bottom: 0; }
 .stat:first-child strong { font-size: clamp(28px, 3vw, 40px); }
 .stat p { margin-bottom: 8px; }
