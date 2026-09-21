@@ -1183,3 +1183,90 @@ h1 {
   .week-total { grid-column: 1 / -1; flex-direction: row; justify-content: space-between; border-left: 0; padding: 7px 4px; }
   .market-list li { grid-template-columns: 1fr 1fr 75px; gap: 6px; }
 }
+
+/* Journal workspace refinements. Created by Tommy. */
+.workspace { padding-top: 28px; }
+.page-heading { margin-bottom: 18px; gap: 16px; }
+.page-heading .eyebrow { display: none; }
+.page-heading h1 { font-size: clamp(24px, 2.5vw, 32px); margin-bottom: 4px; }
+.page-heading .muted { font-size: 13px; }
+.preview-notice { display: block; padding: 0; margin-bottom: 10px; }
+.preview-notice summary { padding: 9px 12px; cursor: pointer; font-size: 11px; letter-spacing: .06em; }
+.preview-notice p { padding: 0 12px 12px; color: var(--muted-foreground); line-height: 1.6; }
+.exchange-notice { margin: 0 0 16px; line-height: 1.6; }
+.rate-details summary { display: flex; align-items: center; gap: 8px; cursor: pointer; width: fit-content; min-height: 32px; list-style: none; }
+.rate-details summary::-webkit-details-marker { display: none; }
+.rate-details summary svg { transition: transform 180ms ease; }
+.rate-details[open] summary svg { transform: rotate(180deg); }
+.rate-content { max-width: 640px; padding: 12px 16px; margin-top: 6px; border: 1px solid var(--border); background: var(--card); display: grid; gap: 8px; animation: journal-reveal 180ms ease-out; }
+.rate-error { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; color: var(--negative); }
+.toolbar { padding-bottom: 12px; }
+.workspace-context { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 8px 20px; margin-bottom: 12px; }
+.workspace-context .preview-notice { margin: 0; max-width: 640px; }
+.workspace-context .exchange-notice { margin: 0; }
+.period-toolbar { margin: 10px 0 4px; }
+.preferences-trigger { gap: 8px; padding-inline: 10px; font: 12px var(--font-mono); }
+.journal-preferences { border-radius: 0; max-width: calc(100vw - 32px); }
+.preference-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 16px; }
+.journal-preferences h2 { font-size: 14px; }
+.header-actions { gap: 12px; }
+.stats-grid { grid-template-columns: 1.4fr 1fr 1fr; gap: 24px; padding: 20px 0; margin-bottom: 0; }
+.stat:first-child strong { font-size: clamp(28px, 3vw, 40px); }
+.stat p { margin-bottom: 8px; }
+.stat strong { margin-bottom: 6px; }
+.income-summary { display: flex; align-items: baseline; justify-content: flex-end; flex-wrap: wrap; gap: 12px; padding: 12px 0 20px; color: var(--muted-foreground); font-size: 12px; }
+.income-summary strong { font-variant-numeric: tabular-nums; font-weight: 500; }
+.calendar-view[data-state="active"] { display: flex; flex-direction: column; gap: 24px; }
+.calendar-view .calendar-panel { order: 0; }
+.calendar-view .chart-panel { order: 1; margin: 0; }
+.calendar-panel { animation: journal-reveal 200ms ease-out; }
+.chart-panel { margin-bottom: 24px; }
+.section-heading { margin-bottom: 16px; }
+.day-cell.is-active { border-color: var(--foreground); box-shadow: inset 0 0 0 1px var(--foreground); }
+.equity-chart { cursor: crosshair; }
+.chart-tooltip { pointer-events: none; }
+.icon-button, .primary-button, .text-button, .day-cell, .month-bar, .view-tabs [data-slot="tabs-trigger"] { transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 150ms ease, box-shadow 150ms ease; }
+.primary-button:active:not(:disabled), .icon-button:active:not(:disabled) { transform: translateY(1px); }
+.winrate-bar > i { transition: flex-grow 240ms ease; }
+.month-bar .bar-area > span { transition: height 240ms ease; }
+.journal-tabs > [data-slot="tabs-content"][data-state="active"] { animation: journal-reveal 200ms ease-out; }
+@keyframes journal-reveal { from { opacity: .35; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+@media (min-width: 1100px) {
+  .calendar-view[data-state="active"] { display: grid; grid-template-columns: minmax(0, 1fr) 300px; align-items: start; }
+  .calendar-view .chart-panel { position: sticky; top: 24px; padding: 18px 14px; }
+  .calendar-view .chart-panel .section-heading { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .calendar-view .chart-wrap { padding-left: 60px; }
+  .calendar-view .chart-dates { padding-left: 0; font-size: 10px; }
+  .calendar-view .day-cell { padding: 9px 6px; }
+  .calendar-view .day-value { font-size: 13px; letter-spacing: -.3px; }
+}
+@media (max-width: 640px) {
+  .workspace { padding-top: 20px; }
+  .page-heading { flex-direction: row; align-items: center; }
+  .page-heading .primary-button { width: auto; font-size: 12px; padding: 11px; gap: 6px; }
+  .page-heading .muted { display: none; }
+  .page-heading h1 { font-size: 24px; margin: 0; }
+  .toolbar { gap: 14px; }
+  .stats-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px 14px; padding: 16px 0; }
+  .stat:first-child { grid-column: 1 / -1; }
+  .stat:first-child strong { font-size: 36px; }
+  .stat strong { font-size: clamp(18px, 5.5vw, 24px); }
+  .stat p { font-size: 12px; }
+  .stat > span { font-size: 11px; }
+  .income-summary { justify-content: space-between; padding-bottom: 18px; }
+  .calendar-view { gap: 20px; }
+  .period-toolbar { gap: 8px; min-width: 0; }
+  .period-options { flex-wrap: nowrap; overflow-x: auto; width: 100%; padding-block: 3px; gap: 8px; }
+  .period-options button { flex-shrink: 0; text-decoration: none; }
+  .header-actions { gap: 8px; }
+  .workspace-context { gap: 4px 12px; }
+  .workspace-context .preview-notice summary { font-size: 10px; }
+  .workspace-context .exchange-notice { font-size: 11px; }
+  .page-heading { flex-wrap: wrap; }
+  .page-heading h1 { font-size: 22px; }
+  .page-heading > div { flex: 1 1 160px; }
+}
+@media (max-width: 360px) {
+  .page-heading { flex-wrap: wrap; }
+  .page-heading .primary-button { width: 100%; }
+}

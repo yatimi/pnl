@@ -1,6 +1,7 @@
 // Created by Tommy.
 export const messages = {
   en: {
+    preferences: "Appearance & currency",
     invalidPeriod: "The end date must be on or after the start date.",
     previousPeriod: "Previous period",
     nextPeriod: "Next period",
@@ -192,6 +193,7 @@ export const messages = {
     deleteRetry: "Could not delete the entry. Please try again.",
   },
   ru: {
+    preferences: "Вид и валюта",
     invalidPeriod: "Конечная дата должна быть не раньше начальной.",
     previousPeriod: "Предыдущий период",
     nextPeriod: "Следующий период",
