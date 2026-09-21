@@ -9,6 +9,9 @@ import { flushSync } from "react-dom";
 import {
   Share2,
   Settings,
+  LogOut,
+  FlaskConical,
+  BookOpen,
   Moon,
   Sun,
   Plus,
@@ -320,7 +323,7 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
         </a>
         <span className="header-caption">{t("journal")}</span>
         <div className="header-actions">
-          {!initialDemo && <form action="/auth/signout" method="post"><button className="text-button" type="submit">{t("signOut")}</button></form>}
+          {!initialDemo && <form action="/auth/signout" method="post"><button className="icon-button" type="submit" aria-label={t("signOut")} title={t("signOut")}><LogOut size={18} /></button></form>}
           <button
             className="icon-button"
             disabled={unavailable || stats.active === 0}
@@ -331,10 +334,12 @@ export default function Dashboard({ initialDemo = false }: { initialDemo?: boole
             <Share2 size={18} />
           </button>
           <button
-            className={"demo-button " + (demo ? "is-demo" : "")}
+            className="icon-button"
             onClick={toggleDemo}
+            aria-label={demo ? t("myJournal") : t("demo")}
+            title={demo ? t("myJournal") : t("demo")}
           >
-            {demo ? t("myJournal") : t("demo")}
+            {demo ? <BookOpen size={18} /> : <FlaskConical size={18} />}
           </button>
           <Popover>
             <PopoverTrigger asChild>
